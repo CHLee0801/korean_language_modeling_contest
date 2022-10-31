@@ -1,0 +1,82 @@
+{
+    "sentiment": {
+      "0": [
+        "아래의 발화에서 느껴지는 감성을 선택지 중 하나로 분류해봐\n{질문}\n 선택지: {sentiment_cand}",
+        "{sentiment_label}"
+      ],
+      "1": [
+        "{질문}은 대화 중 일부를 추출한 것이라고 하는데, 여기서 느껴지는 감성은 어때?",
+        "{sentiment_label}"
+      ],
+      "2": [
+        "다음과 같이 주어지는 단발성 대화를 읽고 화자의 감성을 긍정, 부정, 중립 중 하나 고르시오 \n{질문}",
+        "{sentiment_label}"
+      ],
+      "3": [
+        "\n{질문}\n위와 같은 대화를 통해 확인할 수 있는 감성을 {sentiment_cand} 중에서 선택해봐요",
+        "{sentiment_label}"
+      ],
+      "4": [
+        "다음 문장의 감성은 어떠한가 \n{질문} 선택지: {sentiment_cand}",
+        "{sentiment_label}"
+      ],
+      "5": [
+        "{sentiment_cand}로 부터 \"{질문}\"의 적절한 감성을 고르시오 ",
+        "{sentiment_label}"
+      ],
+      "6": [
+        "대화 마지막 발화인 ({질문})의 감성은? {sentiment_cand} ",
+        "{sentiment_label}"
+      ],
+      "7": [
+        "아래에 주어진 문장은 두 사람의 대화 중 마지막 발화를 추출한 것이라고 할 때, 마지막 발화를 한 화자의 감성을 선택지에서 골라줄래? \n{질문}\n 선택지: {sentiment_cand}",
+        "{sentiment_label}"
+      ],
+      "8": [
+        "대화를 읽고 화자의 감성을 판단하여 분류하는 문제입니다. 아래에 주어지는 글을 분류하시오 \n{질문}\n 선택지: {sentiment_cand}",
+        "{sentiment_label}"
+      ]
+    },
+    "emotion": {
+      "0": [
+        "다음 대화의 감정은 무엇인가요? {질문}\n{emotion_cand}",
+        "{emotion_label}"
+      ],
+      "1": [
+        "\"{질문}\"는(은) {emotion_cand} 중 어떠한 감정인가",
+        "{emotion_label}"
+      ],
+      "2": [
+        "다음은 단발성 감정 대화이다. {질문}의 감정은 [{emotion_cand}] 중 무엇인가?",
+        "{emotion_label}"
+      ],
+      "3": [
+        "[{질문}]의 발화 감정은 무엇인지 알려줄래?",
+        "{emotion_label}"
+      ],
+      "4": [
+        "{질문}\n위와 같은 대화에 등장하는 사용자의 감정으로 가장 올바른 것을 골라봐\n{emotion_cand}",
+        "{emotion_label}"
+      ],
+      "5": [
+        "{질문}이라는 문장에서 느껴지는 감정을 알려줘 \n{emotion_cand}",
+        "{emotion_label}"
+      ],
+      "6": [
+        "{질문}은 대화의 일부를 추출한 것인데, {emotion_cand} 중 어떤 감정에 가장 가까운 것 같아요?",
+        "{emotion_label}"
+      ],
+      "7": [
+        "화자의 감정을 {emotion_cand} 중 하나로 분류하는 문제입니다. {질문}의 감정을 분류하시오",
+        "{emotion_label}"
+      ],
+      "8": [
+        "문장의 감정이 {emotion_cand}로 나뉘어진다고 할 때, {질문}은 어디에 가장 가까울까?",
+        "{emotion_label}"
+      ],
+      "9": [
+        "발화 {질문}에서 등장하는 화자의 감정으로 가장 적절한 것을 {emotion_cand}에서 선택해봐요 ",
+        "{emotion_label}"
+      ]
+    }
+  }

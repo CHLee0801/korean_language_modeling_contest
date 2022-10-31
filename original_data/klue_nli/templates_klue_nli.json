@@ -1,0 +1,13 @@
+{
+    "nli":{
+        "0" : ["전제: {premise}\n가설: {hypothesis}\n다음 전제와 가설 간의 관계를 추론하세요. 참의면 함의, 거짓이면 모순, 판단 불가이면 중립입니다.\n선택지: {nli_choice}", "{nli_answer}"],
+        "1" : ["자연어 추론 문제이다. 전제와 가설을 분류하라.\n전제: {premise}\n가설: {hypothesis}\n선택지: {nli_choice}", "{nli_answer}"],
+        "2" : ["주어진 전제와 가설 문장에 적합한 관계 ({nli_choice})를 고르세요.\n전제: {premise}\n가설: {hypothesis}", "{nli_answer}"],
+        "3" : ["다음 두 문장을 보고 둘 사이의 관계를 알려주세요.\n문장1: {premise}\n문장2: {hypothesis}\n선택지: {nli_choice}", "{nli_answer}"],
+        "4" : ["premise: {premise}\nhypothesis: {hypothesis}\n다음 두 문장은 모순 관계인가?\n선택지: {2지선택지}", "{모순여부}"],
+        "5" : ["[{doc_type}]\n[전제]: {premise}\n[가설]: {hypothesis}\n다음 전제와 가설이 관계가 있는가?\n선택지: {2지선택지}", "{중립여부}"],
+        "6" : ["다음 {doc_type}을/를 보고 관계를 말하시오.\n[전제]: {premise}\n[가설]: {hypothesis}\n선택지: {nli_choice}", "{nli_answer}"],
+        "7" : ["{premise}\n{hypothesis}\n위의 두 문장 함의관계야?\n{2지선택지}", "{함의여부}"],
+        "8" : ["아래 전제와 가설이 말이 돼?\n[전제]: {premise}\n[가설]: {hypothesis}\n선택지: {2지선택지}", "{모순여부}"]
+    }
+}
