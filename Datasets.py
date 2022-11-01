@@ -27,30 +27,35 @@ class Custom_Dataset(Dataset):
     def convert_to_features(self, example_batch, index=None):  
         if self.mode == 'train' or self.mode == 'valid':
             if self.type_path == 'category':
-                input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
+                input_, label = example_batch['input'], example_batch['label']
+                #input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
                 #label = torch.tensor(json.loads(label))
             elif self.type_path == 'topic':
                 input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
-                #label = torch.tensor(json.loads(label))
-            elif self.type_path == "sentiment" or self.type_path == 'binary':
+                #input_, label = example_batch['input'], example_batch['entity'], example_batch['label']
+                label = torch.tensor(json.loads(label))
+            elif self.type_path == 'trinary':
+                input_, label = example_batch['input'], example_batch['label']
+            elif self.type_path == "sentiment":
                 input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
         elif self.mode == 'eval':
-            if self.type_path == 'topic':
+            if self.type_path == 'category' or self.type_path == 'trinary':
                 input_, entity_, label = example_batch[0], [], []
-            elif self.type_path == 'category' or self.type_path == 'sentiment' or self.type_path == 'binary':
+            elif self.type_path == 'topic' or self.type_path == 'sentiment':
                 input_, entity_, label = example_batch[0], example_batch[1], []
                 
         if self.type_path == 'category':
-            context = entity_ + "[SEP]" + input_ #ver2
+            #context = entity_ + "[SEP]" + input_ #ver2
+            context = input_
             #context = entity_ + "은/는 뭐에 대한 거야?" + "[SEP]" + input_ #ver3
         elif self.type_path == 'topic':
-            context = entity_ + "[SEP]" + input_ #ver2
+            context = "주제 - " + entity_ + "[SEP]" + input_ #ver2
             #context = "카테고리가 뭐야?" + "[SEP]" + input_ #ver3
         elif self.type_path == 'sentiment':
-            context = f"{entity_.split('#')[0]}의 {entity_.split('#')[1]}에 대해 어떻게 생각해?" + "[SEP]" + input_
-            #context = input_ + f"[SEP]{entity_.split('#')[0]}의 {entity_.split('#')[1]}의 감정은?"
-        elif self.type_path == 'binary':
-            context = entity_ + "[SEP]" + input_
+            #context = entity_ + "[SEP]" + input_ #ver2
+            context = f"{entity_.split('#')[0]} - {entity_.split('#')[1]}" + "[SEP]" + input_
+        elif self.type_path == 'trinary':
+            context = input_
 
         source = self.tokenizer.batch_encode_plus([str(context)], max_length=self.input_length, 
                                                     padding='max_length', truncation=True, return_tensors="pt", return_token_type_ids=True)

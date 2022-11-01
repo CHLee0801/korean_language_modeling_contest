@@ -29,10 +29,10 @@ class ROBERTA(pl.LightningModule):
         self.mode = mode
         if self.mode == 'sentiment':
             self.num_label = 3
-        elif self.mode == 'binary':
-            self.num_label = 2
+        elif self.mode == 'trinary':
+            self.num_label = 3
         elif self.mode == 'category':
-            self.num_label = 7
+            self.num_label = 5
         elif self.mode == 'topic':
             self.num_label = 4
         else:
@@ -47,10 +47,11 @@ class ROBERTA(pl.LightningModule):
         self.labels_classifier = nn.Linear(1024, self.num_label)
         self.dropout = nn.Dropout(p=0.1)
         self.relu = nn.ReLU()
-        if self.mode == 'binary' or self.mode == 'sentiment':
+        if self.mode == 'trinary' or self.mode == 'sentiment' or self.mode == 'category':
             self.criterion = nn.CrossEntropyLoss()
         else:
             self.criterion = nn.BCELoss()
+        #self.criterion = nn.CrossEntropyLoss()
         self.save_hyperparameters(hparams)
 
         self.train_pred = []
@@ -60,6 +61,7 @@ class ROBERTA(pl.LightningModule):
         self.epoch_num = 0
         self.threshold = 0.5
 
+
     def forward(self, input_ids, input_mask, labels=None):
         output = self.model(
             input_ids=input_ids,
@@ -67,38 +69,38 @@ class ROBERTA(pl.LightningModule):
         )
         output = self.dropout(output.pooler_output)
         output = self.labels_classifier(output)
-        #output = self.relu(output)
         output = torch.sigmoid(output)
         loss = 0
         if labels is not None:
-            if self.mode == 'binary' or self.mode == 'sentiment':
+            if self.mode == 'trinary' or self.mode == 'sentiment' or self.mode == 'category':
                 loss = self.criterion(output, labels)
             else:
                 loss = self.criterion(output.to(torch.float16), labels.to(torch.float16))
+            #loss = self.criterion(output, labels)
         return loss, output
 
 
     def training_step(self, batch):
         loss, outputs = self(batch['source_ids'], batch['source_mask'], batch['labels'])
 
-        if self.mode == 'binary' or self.mode == 'sentiment':
+        if self.mode == 'trinary' or self.mode == 'sentiment' or self.mode == 'category':
             self.train_pred.append(torch.argmax(outputs).detach().cpu())
-        elif self.mode == 'category' or self.mode == 'topic':
+        elif self.mode == 'topic':
             self.train_pred.append(outputs[0].detach().cpu())
+            #self.train_pred.append(torch.argmax(outputs).detach().cpu())
 
         self.train_gt.append(batch['labels'].detach().cpu()[0])
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def on_train_epoch_end(self):
-        if self.mode == 'binary' or self.mode == 'sentiment':
+        if self.mode == 'trinary' or self.mode == 'sentiment' or self.mode == 'category':
             acc = accuracy_score(self.train_gt, self.train_pred)
-        elif self.mode == 'category' or self.mode == 'topic':
+        elif self.mode == 'topic':
             self.train_pred = torch.stack(self.train_pred)
             self.train_gt = torch.stack(self.train_gt)
             self.train_pred = torch.where(self.train_pred > self.threshold, 1, 0)
-
-            acc = accuracy_score(self.train_pred, self.train_gt)
+            acc = accuracy_score(self.train_gt, self.train_pred)
         f1 = f1_score(self.train_pred, self.train_gt, average='macro')
 
         self.log('train_acc', acc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -119,29 +121,41 @@ class ROBERTA(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         loss, outputs = self(batch['source_ids'], batch['source_mask'], batch['labels'])
-        if self.mode == 'binary' or self.mode == 'sentiment':
+        if self.mode == 'trinary'  or self.mode == 'sentiment' or self.mode == 'category':
             self.val_pred.append(torch.argmax(outputs).detach().cpu())
-        elif self.mode == 'category' or self.mode == 'topic':
+        elif self.mode == 'topic':
             self.val_pred.append(outputs[0].detach().cpu())
+            #self.val_pred.append(torch.argmax(outputs).detach().cpu())
 
         self.val_gt.append(batch['labels'].detach().cpu()[0])
-        self.log('val_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
         return loss
 
     def on_validation_epoch_end(self):
-        if self.mode == 'binary' or self.mode == 'sentiment':
+        if self.mode == 'trinary'  or self.mode == 'sentiment' or self.mode == 'category':
             acc = accuracy_score(self.val_gt, self.val_pred)
-        elif self.mode == 'category' or self.mode == 'topic':
+        elif self.mode == 'topic':
             self.val_pred = torch.stack(self.val_pred)
             self.val_gt = torch.stack(self.val_gt)
             self.val_pred = torch.where(self.val_pred > self.threshold, 1, 0)
-
-            acc = accuracy_score(self.val_pred, self.val_gt)
-        f1 = f1_score(self.val_pred, self.val_gt, average='macro')
-
+            acc = accuracy_score(self.val_gt, self.val_pred)
+        f1_all = f1_score(self.val_pred, self.val_gt, average=None)
+        f1_macro = f1_score(self.val_pred, self.val_gt, average='macro')
+        f1_micro = f1_score(self.val_pred, self.val_gt, average='micro')
         self.log('val_acc', acc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        self.log('val_f1', f1, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        for f1 in range(len(f1_all)):
+            self.log(f'val_f1_class_{f1}', f1_all[f1], on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log('val_f1_macro', f1_macro, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log('val_f1_micro', f1_micro, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        
+        if self.mode == 'sentiment':
+            count_list = [0,0,0]
+            for i in self.val_pred:
+                count_list[int(i)] += 1
+            all_sum = sum(count_list)
+            self.log('val_pos_per', count_list[0]/all_sum * 100, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+            self.log('val_neg_per', count_list[1]/all_sum * 100, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+            self.log('val_neu_per', count_list[2]/all_sum * 100, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.val_pred = []
         self.val_gt = []
 

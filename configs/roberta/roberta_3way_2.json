@@ -1,10 +1,10 @@
 {
     "input_length" : 128,
     "output_length" : 128,
-    "num_train_epochs" : 10,
+    "num_train_epochs" : 6,
     "output_dir" : "/ckpt/topic/",
-    "train_path" : "data/ver3/topic_train.csv",
-    "eval_path":"data/ver3/topic_dev.csv",
+    "train_path" : "data/ver6/category_3way_train.csv",
+    "eval_path":"data/ver6/category_3way_dev.csv",
     "train_batch_size" : 1,
     "eval_batch_size": 1,
     "gradient_accumulation_steps": 6,
@@ -14,13 +14,13 @@
     "check_val_every_n_epoch":1,
     "accelerator" : "deepspeed_stage_2",
     "fp16" : true,
-    "CUDA_VISIBLE_DEVICES" : "8,9,10,11",
+    "CUDA_VISIBLE_DEVICES" : "12,13,14,15",
     "wandb_log": true,
-    "wandb_project": "modu_topic_last",
-    "wandb_run_name" : "lr2e-5_bs24_reversed",
+    "wandb_project": "modu_3way",
+    "wandb_run_name" : "lr22e-5_bs24_rb_3way_category",
     "check_validation" : false,
     "resume_from_checkpoint": false,
-    "checkpoint_path" : "ckpt/topic/bert_lr2e-5_bs24_reversed/",
-    "mode":"topic",
-    "model":"bert"
+    "checkpoint_path" : "ckpt/topic/rb_lr2e-5_bs24_3way_category/",
+    "mode":"trinary",
+    "model":"roberta"
 }

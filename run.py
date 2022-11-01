@@ -11,7 +11,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.plugins import DeepSpeedPlugin
-from Evaluation import evaluate
+from Evaluation_2 import evaluate
 
 from models import load_model
 CUDA_LAUNCH_BLOCKING=1

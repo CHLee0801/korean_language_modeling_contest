@@ -4,7 +4,7 @@
     "num_train_epochs" : 20,
     "output_dir" : "",
     "train_path" : "data/ver2/sentiment_train.csv",
-    "eval_path":"data/ver6/category_3way_dev.csv",
+    "eval_path":"data/ver4/topic_sent_NLI_B_dev.csv",
     "train_batch_size" : 1,
     "eval_batch_size": 1,
     "gradient_accumulation_steps": 8,
@@ -22,9 +22,9 @@
     "resume_from_checkpoint": false,
     "checkpoint_path_1" : "ckpt/topic/rb_lr1e-5_bs32_3way_category/trinary3.pt",
     "checkpoint_path_2" : "ckpt/topic/bert_lr2e-5_bs24_reversed/topic6.pt",
-    "checkpoint_path_3" : "ckpt/category/rb_lr1e-5_bs32_5way/category5.pt",
+    "checkpoint_path_3" : "ckpt/category/rb_lr1e-5_bs24_5way/category5.pt",
     "checkpoint_path_4" : "ckpt/sentiment/rb_lr2e-5_bs24_1/sentiment2.pt",
     "output_log":"log/out_1.json",
     "mode":"nli, qa",
-    "test": false
+    "test": true
 }

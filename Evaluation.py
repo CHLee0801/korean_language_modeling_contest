@@ -120,7 +120,30 @@ def evaluate(args, Model_1, Model_2):
     topic_list = ['제품 전체', '본품', '패키지/구성품', '브랜드']
     category_list = ['품질', '편의성', '일반', '다양성', '인지도', '가격', '디자인']
 
+    ############### model_0 ###############
+    
+    model_0 = Model_1(args, "trinary")
+
+    topic_grad = {}
+    topic_classifier_grad = {}
+    if args.checkpoint_path_1 != "":
+        sent_model = torch.load(args.checkpoint_path_1)
+        
+        for key, value in sent_model.items():
+            if 'classifier' in key:
+                topic_classifier_grad[key.split('.')[-1]] = value
+            else:
+                topic_grad['model.'+key] = value
+        model_0.load_state_dict(topic_grad, strict=False)
+    
+    model_0.eval()
+    model_0.to('cuda')
+    tokenizer_1 = model_0.tokenizer
+    topic_classifier = model_0.labels_classifier
+    topic_classifier.load_state_dict(topic_classifier_grad)
+    
     ############### model_1 ###############
+
     model_1 = Model_1(args, "topic")
 
     topic_grad = {}
@@ -162,8 +185,6 @@ def evaluate(args, Model_1, Model_2):
     tokenizer_2 = model_2.tokenizer
     category_classifier = model_2.labels_classifier
     category_classifier.load_state_dict(category_classifier_grad)
-
-    #########################################################
 
     ############### model_3 ###############
 
@@ -235,45 +256,29 @@ def evaluate(args, Model_1, Model_2):
     print('Length of category validation data: ',len(dataset_1))
     loader_1 = DataLoader(dataset_1, batch_size=args.eval_batch_size, shuffle=False)
 
-    topic_pred = []
-    topic_gt = []
-    
+    first_out = []
+    second_out = []
+    sentiment_list = []
     for batch in tqdm(iter(loader_1)):
         with torch.no_grad():
-            output = model_2.model(
+            output = model_0.model(
                 batch['source_ids'].cuda(),
                 batch['source_mask'].cuda()
             )
             output = category_classifier(output.pooler_output)
-            output = torch.sigmoid(output)
-
-            #if sum(torch.where(output > 0.5, 1, 0)[0]) == 0:
-            #    output[0][torch.argmax(output)] = 1
-
-            if args.test == False:
-                topic_gt.append(batch['labels'][0].detach().cpu())
-            topic_pred.append(output[0].detach().cpu())
-
-    topic_pred = torch.stack(topic_pred)
-    topic_pred = torch.where(topic_pred > 0.5, 1, 0)
-
-    if args.test == False:
-        topic_gt = torch.stack(topic_gt)
-        topic_acc_score = accuracy_score(topic_pred, topic_gt)
-        topic_f1 = f1_score(topic_pred, topic_gt, average='macro')
-        #topic_f1 = f1_score(topic_pred, topic_gt)
-
-        print(f"Topic Acc : {topic_acc_score}")
-        print(f"Topic F1 : {topic_f1}")
-
-    first_out = []
+            output = torch.sigmoid(output[0])
+            value = int(torch.argmax(output).detach().cpu())
+            first_out.append(value)
 
     if args.test == False:
         first_dataset = pd.read_csv(args.eval_path, encoding='utf-8')
         for idx, row in first_dataset.iterrows():
-            for ii in range(7):
-                if topic_pred[idx][ii] == 1:
-                    first_out.append([row['input'], category_list[ii]])
+            if first_out[idx] == 0:
+                sentiment_list.append([row['input'], '본품#품질'])
+            elif first_out[idx] == 1:
+                sentiment_list.append([row['input'], '제품 전체#일반'])
+            else:
+                second_out.append([row['input']])
     else:
         for idx in range(len(sentence_list_for_topic)):
             for ii in range(7):
