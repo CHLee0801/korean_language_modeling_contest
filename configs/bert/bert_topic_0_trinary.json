@@ -1,10 +1,10 @@
 {
     "input_length" : 128,
     "output_length" : 128,
-    "num_train_epochs" : 6,
+    "num_train_epochs" : 10,
     "output_dir" : "/ckpt/topic/",
-    "train_path" : "data/ver6/category_3way_train_2.csv",
-    "eval_path":"data/ver6/category_3way_dev_2.csv",
+    "train_path" : "data/ver6/topic/topic_train_0.csv",
+    "eval_path":"data/ver6/topic/topic_dev_0.csv",
     "train_batch_size" : 1,
     "eval_batch_size": 1,
     "gradient_accumulation_steps": 24,
@@ -16,11 +16,11 @@
     "fp16" : true,
     "CUDA_VISIBLE_DEVICES" : "0",
     "wandb_log": true,
-    "wandb_project": "modu_3way",
-    "wandb_run_name" : "lr2e-5_bs24_rb_3way_category_2",
+    "wandb_project": "modu_topic_seperate",
+    "wandb_run_name" : "bert_lr2e-5_bs24_0",
     "check_validation" : false,
     "resume_from_checkpoint": false,
-    "checkpoint_path" : "ckpt/topic/rb_lr2e-5_bs24_3way_category_2/",
-    "mode":"trinary",
-    "model":"roberta"
+    "checkpoint_path" : "ckpt/topic_test/bert_lr2e-5_bs24_0/",
+    "mode":"topic_trinary",
+    "model":"bert"
 }

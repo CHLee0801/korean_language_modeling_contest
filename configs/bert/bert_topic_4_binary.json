@@ -1,10 +1,10 @@
 {
     "input_length" : 128,
     "output_length" : 128,
-    "num_train_epochs" : 6,
+    "num_train_epochs" : 10,
     "output_dir" : "/ckpt/topic/",
-    "train_path" : "data/ver6/topic_train.csv",
-    "eval_path":"data/ver6/topic_dev.csv",
+    "train_path" : "data/ver6/topic/topic_train_4.csv",
+    "eval_path":"data/ver6/topic/topic_dev_4.csv",
     "train_batch_size" : 1,
     "eval_batch_size": 1,
     "gradient_accumulation_steps": 32,
@@ -16,11 +16,11 @@
     "fp16" : true,
     "CUDA_VISIBLE_DEVICES" : "0",
     "wandb_log": true,
-    "wandb_project": "modu_topic_last",
-    "wandb_run_name" : "rb_lr1e-5_bs32_reversed",
+    "wandb_project": "modu_topic_seperate",
+    "wandb_run_name" : "bert_lr1e-5_bs32_4",
     "check_validation" : false,
     "resume_from_checkpoint": false,
-    "checkpoint_path" : "ckpt/topic/rb_lr1e-5_bs32_reversed/",
-    "mode":"topic",
-    "model":"roberta"
+    "checkpoint_path" : "ckpt/topic_test/bert_lr1e-5_bs32_4/",
+    "mode":"topic_binary",
+    "model":"bert"
 }

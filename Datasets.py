@@ -29,13 +29,14 @@ class Custom_Dataset(Dataset):
             if self.type_path == 'category':
                 input_, label = example_batch['input'], example_batch['label']
                 #input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
-                #label = torch.tensor(json.loads(label))
-            elif self.type_path == 'topic':
+                label = torch.tensor(json.loads(label))
+            elif self.type_path == 'topic' or self.type_path == 'topic_binary' or self.type_path == 'topic_trinary':
                 input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
                 #input_, label = example_batch['input'], example_batch['entity'], example_batch['label']
                 label = torch.tensor(json.loads(label))
             elif self.type_path == 'trinary':
                 input_, label = example_batch['input'], example_batch['label']
+                label = torch.tensor(json.loads(label))
             elif self.type_path == "sentiment":
                 input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
         elif self.mode == 'eval':
@@ -48,7 +49,7 @@ class Custom_Dataset(Dataset):
             #context = entity_ + "[SEP]" + input_ #ver2
             context = input_
             #context = entity_ + "은/는 뭐에 대한 거야?" + "[SEP]" + input_ #ver3
-        elif self.type_path == 'topic':
+        elif self.type_path == 'topic' or self.type_path == 'topic_binary' or self.type_path == 'topic_trinary':
             context = "주제 - " + entity_ + "[SEP]" + input_ #ver2
             #context = "카테고리가 뭐야?" + "[SEP]" + input_ #ver3
         elif self.type_path == 'sentiment':

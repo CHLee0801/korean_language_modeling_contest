@@ -90,6 +90,8 @@ if __name__ == '__main__':
         hparam.test = False
     if "model" not in hparam:
         hparam.model = ""
+    if "mode" not in hparam:
+        hparam.mode = ""
     #Logging into WANDB if needed
     if hparam.wandb_log:
         wandb_logger = WandbLogger(project=hparam.wandb_project, name=hparam.wandb_run_name, entity="changholee")

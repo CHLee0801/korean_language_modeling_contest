@@ -37,9 +37,13 @@ class BERT(pl.LightningModule):
         elif self.mode == 'trinary':
             self.num_label = 3
         elif self.mode == 'category':
-            self.num_label = 7
+            self.num_label = 5
         elif self.mode == 'topic':
             self.num_label = 4
+        elif self.mode == 'topic_trinary':
+            self.num_label = 3
+        elif self.mode == 'topic_binary':
+            self.num_label = 2
         else:
             raise Exception("Wrong mode")
 
@@ -54,7 +58,7 @@ class BERT(pl.LightningModule):
         self.labels_classifier = nn.Linear(768, self.num_label)
         self.dropout = nn.Dropout(p=0.1)
         self.relu = nn.ReLU()
-        if self.mode == 'trinary' or self.mode == 'sentiment':
+        if self.mode == 'sentiment':
             self.criterion = nn.CrossEntropyLoss()
         else:
             self.criterion = nn.BCELoss()
@@ -79,7 +83,7 @@ class BERT(pl.LightningModule):
         output = torch.sigmoid(output)
         loss = 0
         if labels is not None:
-            if self.mode == 'trinary' or self.mode == 'sentiment':
+            if self.mode == 'sentiment':
                 loss = self.criterion(output, labels)
             else:
                 loss = self.criterion(output.to(torch.float16), labels.to(torch.float16))
@@ -90,9 +94,9 @@ class BERT(pl.LightningModule):
     def training_step(self, batch):
         loss, outputs = self(batch['source_ids'], batch['source_mask'], batch['labels'])
 
-        if self.mode == 'trinary' or self.mode == 'sentiment':
+        if self.mode == 'sentiment':
             self.train_pred.append(torch.argmax(outputs).detach().cpu())
-        elif self.mode == 'category' or self.mode == 'topic':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
             self.train_pred.append(outputs[0].detach().cpu())
             #self.train_pred.append(torch.argmax(outputs).detach().cpu())
 
@@ -101,9 +105,9 @@ class BERT(pl.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
-        if self.mode == 'trinary' or self.mode == 'sentiment':
+        if self.mode == 'sentiment':
             acc = accuracy_score(self.train_gt, self.train_pred)
-        elif self.mode == 'category' or self.mode == 'topic':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
             self.train_pred = torch.stack(self.train_pred)
             self.train_gt = torch.stack(self.train_gt)
             self.train_pred = torch.where(self.train_pred > self.threshold, 1, 0)
@@ -128,9 +132,9 @@ class BERT(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         loss, outputs = self(batch['source_ids'], batch['source_mask'], batch['labels'])
-        if self.mode == 'trinary'  or self.mode == 'sentiment':
+        if self.mode == 'sentiment':
             self.val_pred.append(torch.argmax(outputs).detach().cpu())
-        elif self.mode == 'category' or self.mode == 'topic':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
             self.val_pred.append(outputs[0].detach().cpu())
             #self.val_pred.append(torch.argmax(outputs).detach().cpu())
 
@@ -139,9 +143,9 @@ class BERT(pl.LightningModule):
         return loss
 
     def on_validation_epoch_end(self):
-        if self.mode == 'trinary'  or self.mode == 'sentiment':
+        if self.mode == 'sentiment':
             acc = accuracy_score(self.val_gt, self.val_pred)
-        elif self.mode == 'category' or self.mode == 'topic':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
             self.val_pred = torch.stack(self.val_pred)
             self.val_gt = torch.stack(self.val_gt)
             self.val_pred = torch.where(self.val_pred > self.threshold, 1, 0)

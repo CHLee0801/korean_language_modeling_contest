@@ -120,9 +120,10 @@ def evaluate(args, Model_1, Model_2):
     topic_list = ['제품 전체', '본품', '패키지/구성품', '브랜드']
     category_list = ['편의성', '디자인', '인지도','가격','다양성']
 
+    dropout = nn.Dropout(p=0.1)
     ############### model_0 ###############
     
-    model_0 = Model_2(args, "trinary")
+    model_0 = Model_1(args, "trinary")
 
     topic_grad = {}
     topic_classifier_grad = {}
@@ -167,7 +168,7 @@ def evaluate(args, Model_1, Model_2):
 
     ############### model_2 ###############
 
-    model_2 = Model_2(args, "category")
+    model_2 = Model_1(args, "category")
     
     category_grad={}
     category_classifier_grad = {}
@@ -245,7 +246,7 @@ def evaluate(args, Model_1, Model_2):
         print(MYDIR, "folder already exists.")
 
     if args.test == True:
-        true_data = jsonlload("/home/ubuntu/ch.lee/momal/data/nikluge-sa-2022-test.jsonl")
+        true_data = jsonlload("data/nikluge-sa-2022-test.jsonl")
         sentence_list_for_topic = []
         for tdata in true_data:
             sentence_list_for_topic.append([tdata['sentence_form']])
@@ -266,30 +267,35 @@ def evaluate(args, Model_1, Model_2):
                 batch['source_ids'].cuda(),
                 batch['source_mask'].cuda()
             )
-            output = first_classifier(output.pooler_output)
-            output = torch.sigmoid(output[0])
-            value = int(torch.argmax(output).detach().cpu())
-            first_out.append(value)
+            output = dropout(output.pooler_output)
+            output = first_classifier(output)
+            output = torch.sigmoid(output)
+            if sum(torch.where(output > 0.5, 1, 0)[0]) == 0:
+                output[0][torch.argmax(output)] = 1
+            first_out.append(output[0].detach().cpu())
+
+    first_out = torch.stack(first_out)
+    first_out = torch.where(first_out > 0.5, 1, 0)
 
     if args.test == False:
         first_dataset = pd.read_csv(args.eval_path, encoding='utf-8')
         for idx, row in first_dataset.iterrows():
-            if first_out[idx] == 0:
+            if first_out[idx][0] == 1:
                 third_out.append([row['input'], '품질'])
-            elif first_out[idx] == 1:
+            if first_out[idx][1] == 1:
                 third_out.append([row['input'], '일반'])
-            else:
+            if first_out[idx][2] == 1:
                 second_out.append([row['input']])
     else:
         for idx in range(len(sentence_list_for_topic)):
-            if first_out[idx] == 0:
+            if first_out[idx][0] == 1:
                 third_out.append([sentence_list_for_topic[idx][0], '품질'])
-            elif first_out[idx] == 1:
+            if first_out[idx][1] == 1:
                 third_out.append([sentence_list_for_topic[idx][0], '일반'])
-            else:
-                second_out.append([sentence_list_for_topic[idx][0]])   
+            if first_out[idx][2] == 1:
+                second_out.append([sentence_list_for_topic[idx][0]])
 
-    ##################### PREVIOUS MODE #####################
+
 
     dataset_2_0 = Custom_Dataset(second_out, "eval", "category", tokenizer_2, args.input_length)
     print('Length of topic validation data: ',len(dataset_2_0))
@@ -302,14 +308,21 @@ def evaluate(args, Model_1, Model_2):
                 batch['source_ids'].cuda(),
                 batch['source_mask'].cuda()
             )
-            output = category_classifier(output.pooler_output)
-            output = torch.sigmoid(output[0])
-            value = int(torch.argmax(output).detach().cpu())
-            category_pred.append(value)
-        
-    for idx in range(len(second_out)):
-        third_out.append([second_out[idx][0], category_list[category_pred[idx]]])
+            output = dropout(output.pooler_output)
+            output = category_classifier(output)
+            output = torch.sigmoid(output)
+            if sum(torch.where(output > 0.5, 1, 0)[0]) == 0:
+                output[0][torch.argmax(output)] = 1
+            category_pred.append(output[0].detach().cpu())
     
+    category_pred = torch.stack(category_pred)
+    category_pred = torch.where(category_pred > 0.5, 1, 0)
+
+    for idx in range(len(second_out)):
+        for ii in range(5):
+            if category_pred[idx][ii] == 1:
+                third_out.append([second_out[idx][0], category_list[ii]])
+
     dataset_2_1 = Custom_Dataset(third_out, "eval", "topic", tokenizer_1, args.input_length)
     print('Length of topic validation data: ',len(dataset_2_1))
     loader_2_1 = DataLoader(dataset_2_1, batch_size=args.eval_batch_size, shuffle=False)
@@ -321,7 +334,8 @@ def evaluate(args, Model_1, Model_2):
                 batch['source_ids'].cuda(),
                 batch['source_mask'].cuda()
             )
-            output = topic_classifier(output.pooler_output)
+            output = dropout(output.pooler_output)
+            output = topic_classifier(output)
             output = torch.sigmoid(output)
             if sum(torch.where(output > 0.5, 1, 0)[0]) == 0:
                 output[0][torch.argmax(output)] = 1
@@ -349,7 +363,8 @@ def evaluate(args, Model_1, Model_2):
                 batch['source_ids'].cuda(),
                 batch['source_mask'].cuda()
             )
-            output = sentiment_classifier(output.pooler_output)
+            output = dropout(output.pooler_output)
+            output = sentiment_classifier(output)
             output = torch.sigmoid(output)[0]
             value = int(torch.argmax(output).detach().cpu())
             if value == 0:
@@ -367,7 +382,7 @@ def evaluate(args, Model_1, Model_2):
             final_output_dict[sentiment_list[idd][0]].append([sentiment_list[idd][1], sentiment_pred[idd]])
 
     if args.test == False:
-        true_data = jsonlload("/home/ubuntu/ch.lee/momal/data/nikluge-sa-2022-dev.jsonl")
+        true_data = jsonlload("data/nikluge-sa-2022-dev.jsonl")
         pred_data = []
         cnt = 0
         for data in true_data:
@@ -382,9 +397,14 @@ def evaluate(args, Model_1, Model_2):
             }
             pred_data.append(sample_dict)
         
+        outfile_name = "output_file/dev_result_6.jsonl"
+        with open(outfile_name , encoding= "utf-8" ,mode="w") as file: 
+            for i in pred_data: 
+                file.write(json.dumps(i,ensure_ascii=False) + "\n")
         print(evaluation_f1(true_data, pred_data))
+    
     else:
-        true_data = jsonlload("/home/ubuntu/ch.lee/momal/data/nikluge-sa-2022-test.jsonl")
+        true_data = jsonlload("data/nikluge-sa-2022-test.jsonl")
         pred_data = []
         cnt = 0
         for data in true_data:
@@ -398,7 +418,7 @@ def evaluate(args, Model_1, Model_2):
                 'annotation':annotation_list
             }
             pred_data.append(sample_dict)
-        outfile_name = "/home/ubuntu/ch.lee/momal/output_file/trial_1.jsonl"
+        outfile_name = "output_file/test_result_3.jsonl"
         with open(outfile_name , encoding= "utf-8" ,mode="w") as file: 
             for i in pred_data: 
                 file.write(json.dumps(i,ensure_ascii=False) + "\n")
