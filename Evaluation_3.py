@@ -251,11 +251,11 @@ def evaluate(args, Model_1, Model_2, Model_3):
         for tdata in true_data:
             sentence_list_for_topic.append([tdata['sentence_form']])
         
-        dataset_1 = Custom_Dataset(sentence_list_for_topic, "eval", "trinary", tokenizer_0, args.input_length)
+        dataset_1 = Custom_Dataset(sentence_list_for_topic, "eval", "trinary", tokenizer_3, args.input_length)
     else:
-        dataset_1 = Custom_Dataset(args.eval_path, "valid", "trinary", tokenizer_0, args.input_length)
+        dataset_1 = Custom_Dataset(args.eval_path, "valid", "trinary", tokenizer_3, args.input_length)
 
-    print('Length of category validation data: ',len(dataset_1))
+    print('Length of sentiment validation data: ',len(dataset_1))
     loader_1 = DataLoader(dataset_1, batch_size=args.eval_batch_size, shuffle=False)
 
     first_out = []
@@ -263,12 +263,12 @@ def evaluate(args, Model_1, Model_2, Model_3):
     third_out = []
     for batch in tqdm(iter(loader_1)):
         with torch.no_grad():
-            output = model_0.model(
+            output = model_3.model(
                 batch['source_ids'].cuda(),
                 batch['source_mask'].cuda()
             )
             output = dropout(output.pooler_output)
-            output = first_classifier(output)
+            output = sentiment_classifier(output)
             output = torch.sigmoid(output)
             if sum(torch.where(output > 0.5, 1, 0)[0]) == 0:
                 output[0][torch.argmax(output)] = 1
@@ -281,30 +281,29 @@ def evaluate(args, Model_1, Model_2, Model_3):
         first_dataset = pd.read_csv(args.eval_path, encoding='utf-8')
         for idx, row in first_dataset.iterrows():
             if first_out[idx][0] == 1:
-                third_out.append([row['input'], '품질'])
+                second_out.append([row['input'], '긍정'])
             if first_out[idx][1] == 1:
-                third_out.append([row['input'], '일반'])
+                second_out.append([row['input'], '부정'])
             if first_out[idx][2] == 1:
-                second_out.append([row['input']])
+                second_out.append([row['input'], '중립'])
     else:
         for idx in range(len(sentence_list_for_topic)):
             if first_out[idx][0] == 1:
-                third_out.append([sentence_list_for_topic[idx][0], '품질'])
+                second_out.append([sentence_list_for_topic[idx][0], '긍정'])
             if first_out[idx][1] == 1:
-                third_out.append([sentence_list_for_topic[idx][0], '일반'])
+                second_out.append([sentence_list_for_topic[idx][0], '부정'])
             if first_out[idx][2] == 1:
-                second_out.append([sentence_list_for_topic[idx][0]])
+                second_out.append([sentence_list_for_topic[idx][0], '중립'])
 
 
-
-    dataset_2_0 = Custom_Dataset(second_out, "eval", "category", tokenizer_2, args.input_length)
-    print('Length of topic validation data: ',len(dataset_2_0))
+    dataset_2_0 = Custom_Dataset(second_out, "eval", "topic", tokenizer_0, args.input_length)
+    print('Length of 3way validation data: ',len(dataset_2_0))
     loader_2_0 = DataLoader(dataset_2_0, batch_size=args.eval_batch_size, shuffle=False)
 
     category_pred = []
     for batch in tqdm(iter(loader_2_0)):
         with torch.no_grad():
-            output = model_2.model(
+            output = model_0.model(
                 batch['source_ids'].cuda(),
                 batch['source_mask'].cuda()
             )
@@ -319,11 +318,13 @@ def evaluate(args, Model_1, Model_2, Model_3):
     category_pred = torch.where(category_pred > 0.5, 1, 0)
 
     for idx in range(len(second_out)):
-        for ii in range(5):
-            if category_pred[idx][ii] == 1:
-                third_out.append([second_out[idx][0], category_list[ii]])
+        if category_pred[idx][0] == 1:
+            third_out.append([second_out[idx][0], f"{second_out[idx][1]} - "])
+        for ii in range(3):
+            if topic_pred[idd][ii] == 1:
 
-    dataset_2_1 = Custom_Dataset(third_out, "eval", "topic", tokenizer_1, args.input_length)
+
+    dataset_2_1 = Custom_Dataset(third_out, "eval", "category", tokenizer_1, args.input_length)
     print('Length of topic validation data: ',len(dataset_2_1))
     loader_2_1 = DataLoader(dataset_2_1, batch_size=args.eval_batch_size, shuffle=False)
     

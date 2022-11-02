@@ -15,6 +15,8 @@ class Custom_Dataset(Dataset):
             self.dataset_path = dataset_path
             self.dataset = pd.read_csv(dataset_path, encoding='utf-8')
             print(f'Getting dataset {dataset_path} with length {len(self.dataset)}')
+        elif mode == 'kfold':
+            self.dataset = dataset_path
         elif mode == 'eval':
             self.dataset = dataset_path
             print(f'Getting dataset eval_topic with length {len(self.dataset)}')
@@ -25,7 +27,7 @@ class Custom_Dataset(Dataset):
         return len(self.dataset)
 
     def convert_to_features(self, example_batch, index=None):  
-        if self.mode == 'train' or self.mode == 'valid':
+        if self.mode == 'train' or self.mode == 'valid' or self.mode == 'kfold':
             if self.type_path == 'category':
                 input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
                 #input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
@@ -65,7 +67,7 @@ class Custom_Dataset(Dataset):
         return source, label
 
     def __getitem__(self, index):
-        if self.mode == 'train' or self.mode == 'valid':
+        if self.mode == 'train' or self.mode == 'valid' or self.mode == 'kfold':
             source, label = self.convert_to_features(self.dataset.iloc[index], index=index) 
         elif self.mode == 'eval':
             source, label = self.convert_to_features(self.dataset[index], index=index)

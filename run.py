@@ -14,6 +14,9 @@ from pytorch_lightning.plugins import DeepSpeedPlugin
 from Evaluation_2 import evaluate
 
 from models import load_model
+
+from sklearn.model_selection import StratifiedKFold
+
 CUDA_LAUNCH_BLOCKING=1
 def set_seed(seed):
     random.seed(seed)
@@ -97,8 +100,10 @@ if __name__ == '__main__':
     #Logging into WANDB if needed
     if hparam.wandb_log:
         wandb_logger = WandbLogger(project=hparam.wandb_project, name=hparam.wandb_run_name, entity="changholee")
+        # wandb_logger = None
     else:
         wandb_logger = None
+    
         
     #Setting configurations
     args_dict = dict(
@@ -138,7 +143,10 @@ if __name__ == '__main__':
         checkpoint_path_4 = hparam.checkpoint_path_4,
         checkpoint_path_5 = hparam.checkpoint_path_5,
         test = hparam.test,
-        model = hparam.model
+        model = hparam.model,
+        kfold_option= False, 
+        train_idx= None, 
+        valid_idx= None
     )
     args = argparse.Namespace(**args_dict)
 
@@ -179,9 +187,26 @@ if __name__ == '__main__':
             Model = load_model('electra')
         else:
             raise Exception('currently not supporting given model')
-        model = Model(args, args.mode)
-
-        set_seed(40) # very important to set random seed since we mix training data during training. requires for DDP. 
         
-        trainer = pl.Trainer(**train_params)
-        trainer.fit(model)
+        seed= 42
+        set_seed(seed) # very important to set random seed since we mix training data during training. requires for DDP. 
+        model = Model(args, args.mode)
+        total_df= model.get_total_dataset()
+        total_label= total_df['label']
+        
+        org_checkpoint_path= args.checkpoint_path
+        args.kfold_option= True
+        kfold= StratifiedKFold(n_splits= 5, shuffle= True, random_state= seed)  
+        for fold, (train_idx, valid_idx) in enumerate(kfold.split(total_df, total_label)):
+            args.checkpoint_path=f'{org_checkpoint_path}/fold{fold}_'
+            # os.makedirs(args.checkpoint_path, exist_ok=True)
+            args.train_idx= train_idx
+            args.valid_idx= valid_idx
+            print('train, valid length: ', len(args.train_idx), len(args.valid_idx))
+            print('train 0 idx :', args.train_idx[:10])
+            print('valid 0 idx :', args.valid_idx[:10])
+
+            
+            model = Model(args, args.mode)
+            trainer = pl.Trainer(**train_params)
+            trainer.fit(model)
