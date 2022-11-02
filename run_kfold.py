@@ -13,6 +13,10 @@ from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.plugins import DeepSpeedPlugin
 from Evaluation_2 import evaluate
 
+from sklearn.model_selection import train_test_split, StratifiedKFold
+
+
+
 from models import load_model
 CUDA_LAUNCH_BLOCKING=1
 def set_seed(seed):
@@ -179,9 +183,9 @@ if __name__ == '__main__':
             Model = load_model('electra')
         else:
             raise Exception('currently not supporting given model')
-        model = Model(args, args.mode)
+        
 
         set_seed(40) # very important to set random seed since we mix training data during training. requires for DDP. 
-        
+        model = Model(args, args.mode)
         trainer = pl.Trainer(**train_params)
         trainer.fit(model)

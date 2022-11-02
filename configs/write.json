@@ -21,9 +21,10 @@
     "check_validation" : true,
     "resume_from_checkpoint": false,
     "checkpoint_path_1" : "ckpt/topic/bert_lr2e-5_bs24_3way_category_2/trinary3.pt",
-    "checkpoint_path_2" : "ckpt/topic/topic6.pt",
+    "checkpoint_path_2" : "ckpt/topic/bert_lr2e-5_bs24_full_reversed/topic4.pt",
     "checkpoint_path_3" : "ckpt/topic/bert_lr2e-5_bs24_5way_category_2/category5.pt",
-    "checkpoint_path_4" : "ckpt/sentiment/sentiment2.pt",
+    "checkpoint_path_4" : "ckpt/sentiment/sentiment2_0.pt",
+    "checkpoint_path_5" : "ckpt/topic_test/bert_lr2e-5_bs24_3/topic_trinary4.pt",
     "output_log":"log/out_1.json",
     "test": true
 }

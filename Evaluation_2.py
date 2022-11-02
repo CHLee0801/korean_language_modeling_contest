@@ -115,7 +115,7 @@ def evaluation_f1(true_data, pred_data):
         'entire pipeline result': pipeline_result
     }
 
-def evaluate(args, Model_1, Model_2):
+def evaluate(args, Model_1, Model_2, Model_3):
 
     topic_list = ['제품 전체', '본품', '패키지/구성품', '브랜드']
     category_list = ['편의성', '디자인', '인지도','가격','다양성']
@@ -379,7 +379,8 @@ def evaluate(args, Model_1, Model_2):
         if sentiment_list[idd][0] not in final_output_dict:
             final_output_dict[sentiment_list[idd][0]] = [[sentiment_list[idd][1], sentiment_pred[idd]]]
         else:
-            final_output_dict[sentiment_list[idd][0]].append([sentiment_list[idd][1], sentiment_pred[idd]])
+            if [sentiment_list[idd][1], sentiment_pred[idd]] not in final_output_dict[sentiment_list[idd][0]]:
+                final_output_dict[sentiment_list[idd][0]].append([sentiment_list[idd][1], sentiment_pred[idd]])
 
     if args.test == False:
         true_data = jsonlload("data/nikluge-sa-2022-dev.jsonl")
@@ -397,7 +398,7 @@ def evaluate(args, Model_1, Model_2):
             }
             pred_data.append(sample_dict)
         
-        outfile_name = "output_file/dev_result_6.jsonl"
+        outfile_name = "output_file/dev_result_8.jsonl"
         with open(outfile_name , encoding= "utf-8" ,mode="w") as file: 
             for i in pred_data: 
                 file.write(json.dumps(i,ensure_ascii=False) + "\n")
@@ -418,7 +419,7 @@ def evaluate(args, Model_1, Model_2):
                 'annotation':annotation_list
             }
             pred_data.append(sample_dict)
-        outfile_name = "output_file/test_result_3.jsonl"
+        outfile_name = "output_file/test_result_8.jsonl"
         with open(outfile_name , encoding= "utf-8" ,mode="w") as file: 
             for i in pred_data: 
                 file.write(json.dumps(i,ensure_ascii=False) + "\n")
