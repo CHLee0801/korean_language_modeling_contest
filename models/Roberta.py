@@ -20,6 +20,8 @@ import deepspeed
 import numpy as np
 from Datasets import Custom_Dataset
 from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
+from datasets import concatenate_datasets
+
 #from kobert_transformers import get_tokenizer
 
 class ROBERTA(pl.LightningModule):
@@ -40,6 +42,7 @@ class ROBERTA(pl.LightningModule):
 
         self.train_path = hparams.train_path
         self.eval_path = hparams.eval_path
+
         self.tokenizer = AutoTokenizer.from_pretrained("klue/roberta-large")
         self.model = AutoModel.from_pretrained("klue/roberta-large")
         
@@ -197,9 +200,15 @@ class ROBERTA(pl.LightningModule):
     def val_dataloader(self):
         validation_dataset = Custom_Dataset(self.eval_path, "valid", self.mode, self.tokenizer, self.hparams.input_length)
         return DataLoader(validation_dataset, batch_size=self.hparams.eval_batch_size, num_workers=self.hparams.num_workers, shuffle=False)
-    
-    def total_dataloader(self):
-        train_dataset = Custom_Dataset(self.train_path, "train", self.mode, self.tokenizer, self.hparams.input_length)
-        validation_dataset = Custom_Dataset(self.eval_path, "valid", self.mode, self.tokenizer, self.hparams.input_length)
+
+
+
+
+
+
+
 
         
+
+
+

@@ -211,31 +211,7 @@ def evaluate(args, Model_1, Model_2, Model_3):
     sentiment_classifier.load_state_dict(sent_classifier_grad)
 
     #########################################################
-    """
-    ############### model_4 ###############
 
-    model_4 = Model_4(args)
-    
-    sentiment_grad_2={}
-    sent_classifier_grad_2 = {}
-    if args.checkpoint_path_4 != "":
-        sent_model_2 = torch.load(args.checkpoint_path_4)
-        
-        for key, value in sent_model_2.items():
-            if 'classifier' in key:
-                sent_classifier_grad_2[key.split('.')[-1]] = value
-            else:
-                sentiment_grad_2['model.'+key] = value
-        model_4.load_state_dict(sentiment_grad_2, strict=False)
-    
-    model_4.eval()
-    model_4.to('cuda')
-    tokenizer_3 = model_4.tokenizer
-    sentiment_classifier_2 = model_4.labels_classifier
-    sentiment_classifier_2.load_state_dict(sent_classifier_grad_2)
-
-    #########################################################
-    """
     # If folder doesn't exist, then create it.
     MYDIR = ("/".join((args.output_log.split('/'))[:-1]))
     CHECK_FOLDER = os.path.isdir(MYDIR)
@@ -398,7 +374,7 @@ def evaluate(args, Model_1, Model_2, Model_3):
             }
             pred_data.append(sample_dict)
         
-        outfile_name = "output_file/dev_result_8.jsonl"
+        outfile_name = "output_file/dev_result_12.jsonl"
         with open(outfile_name , encoding= "utf-8" ,mode="w") as file: 
             for i in pred_data: 
                 file.write(json.dumps(i,ensure_ascii=False) + "\n")

@@ -15,6 +15,8 @@ class Custom_Dataset(Dataset):
             self.dataset_path = dataset_path
             self.dataset = pd.read_csv(dataset_path, encoding='utf-8')
             print(f'Getting dataset {dataset_path} with length {len(self.dataset)}')
+        elif mode == 'kfold':
+            self.dataset = dataset_path
         elif mode == 'eval':
             self.dataset = dataset_path
             print(f'Getting dataset eval_topic with length {len(self.dataset)}')
@@ -25,7 +27,7 @@ class Custom_Dataset(Dataset):
         return len(self.dataset)
 
     def convert_to_features(self, example_batch, index=None):  
-        if self.mode == 'train' or self.mode == 'valid':
+        if self.mode == 'train' or self.mode == 'valid' or self.mode == 'kfold':
             if self.type_path == 'category':
                 input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
                 #input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
@@ -35,7 +37,7 @@ class Custom_Dataset(Dataset):
                 #input_, label = example_batch['input'], example_batch['entity'], example_batch['label']
                 label = torch.tensor(json.loads(label))
             elif self.type_path == 'trinary':
-                input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
+                input_, label = example_batch['input'], example_batch['label']
                 label = torch.tensor(json.loads(label))
             elif self.type_path == "sentiment":
                 input_, entity_, label = example_batch['input'], example_batch['entity'], example_batch['label']
@@ -46,8 +48,8 @@ class Custom_Dataset(Dataset):
                 input_, entity_, label = example_batch[0], example_batch[1], []
                 
         if self.type_path == 'category':
-            context = entity_ + "[SEP]" + input_ #ver2
-            #context = input_
+            #context = entity_ + "[SEP]" + input_ #ver2
+            context = input_
             #context = entity_ + "은/는 뭐에 대한 거야?" + "[SEP]" + input_ #ver3
         elif self.type_path == 'topic' or self.type_path == 'topic_binary' or self.type_path == 'topic_trinary':
             context = entity_ + "[SEP]" + input_ #ver2
@@ -56,8 +58,7 @@ class Custom_Dataset(Dataset):
             #context = entity_ + "[SEP]" + input_ #ver2
             context = f"{entity_.split('#')[0]} - {entity_.split('#')[1]}" + "[SEP]" + input_
         elif self.type_path == 'trinary':
-            #context = input_
-            context = entity_ + "[SEP]" + input_ #ver2
+            context = input_
 
         source = self.tokenizer.batch_encode_plus([str(context)], max_length=self.input_length, 
                                                     padding='max_length', truncation=True, return_tensors="pt", return_token_type_ids=True)
