@@ -1,8 +1,4 @@
 __pycache__
 ckpt
-data
-run_0.sh
-run_1.sh
 wandb
-log
 output_file

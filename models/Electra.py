@@ -11,6 +11,7 @@ from transformers import (
     ElectraTokenizerFast, 
     BertTokenizerFast,
     ElectraModel,
+    AutoModel
 )
 import torch
 from torch.utils.data import RandomSampler
@@ -49,9 +50,16 @@ class ELECTRA(pl.LightningModule):
 
         self.train_path = hparams.train_path
         self.eval_path = hparams.eval_path
-        self.tokenizer = ElectraTokenizerFast.from_pretrained("kykim/electra-kor-base")
-        self.model = ElectraModel.from_pretrained("kykim/electra-kor-base") 
-        
+        #self.tokenizer = ElectraTokenizerFast.from_pretrained("beomi/KcELECTRA-base-v2022")
+        #self.model = ElectraModel.from_pretrained("beomi/KcELECTRA-base-v2022") 
+        self.tokenizer = AutoTokenizer.from_pretrained('tunib/electra-ko-base')
+        self.model = AutoModel.from_pretrained('tunib/electra-ko-base')
+
+        self.fold_option= hparams.fold_option
+        self.train_idx= hparams.train_idx
+        self.valid_idx= hparams.valid_idx
+
+
         self.model.resize_token_embeddings(len(self.tokenizer))
         self.labels_classifier = nn.Linear(768, self.num_label)
         self.dropout = nn.Dropout(p=0.1)
@@ -69,6 +77,7 @@ class ELECTRA(pl.LightningModule):
         self.val_gt = []
         self.epoch_num = 0
         self.threshold = 0.5
+        self.total_df= self.get_total_dataset()
 
 
     def forward(self, input_ids, input_mask, labels=None):
@@ -199,11 +208,31 @@ class ELECTRA(pl.LightningModule):
         return [optimizer]
 
     def train_dataloader(self):
-        train_dataset = Custom_Dataset(self.train_path, "train", self.mode, self.tokenizer, self.hparams.input_length)
-        sampler = RandomSampler(train_dataset)
-        dataloader = DataLoader(train_dataset,  sampler=sampler,batch_size=self.hparams.train_batch_size, drop_last=True, num_workers=self.hparams.num_workers)
-        return dataloader
+        if self.fold_option:
+            train_dataset= Custom_Dataset(self.total_df.iloc[self.train_idx], "kfold", self.mode, self.tokenizer, self.hparams.input_length)
+            sampler = RandomSampler(train_dataset)
+            dataloader = DataLoader(train_dataset,  sampler=sampler,batch_size=self.hparams.train_batch_size, drop_last=True, num_workers=self.hparams.num_workers)
+            return dataloader
+            
+        else:
+            train_dataset = Custom_Dataset(self.train_path, "train", self.mode, self.tokenizer, self.hparams.input_length)
+            sampler = RandomSampler(train_dataset)
+            dataloader = DataLoader(train_dataset,  sampler=sampler,batch_size=self.hparams.train_batch_size, drop_last=True, num_workers=self.hparams.num_workers)
+            return dataloader
 
     def val_dataloader(self):
-        validation_dataset = Custom_Dataset(self.eval_path, "valid", self.mode, self.tokenizer, self.hparams.input_length)
-        return DataLoader(validation_dataset, batch_size=self.hparams.eval_batch_size, num_workers=self.hparams.num_workers, shuffle=False)
+        if self.fold_option:
+            validation_dataset= Custom_Dataset(self.total_df.iloc[self.valid_idx], "kfold", self.mode, self.tokenizer, self.hparams.input_length)
+            return DataLoader(validation_dataset, batch_size=self.hparams.eval_batch_size, num_workers=self.hparams.num_workers, shuffle=False) 
+            
+        else:
+            validation_dataset = Custom_Dataset(self.eval_path, "valid", self.mode, self.tokenizer, self.hparams.input_length)
+            return DataLoader(validation_dataset, batch_size=self.hparams.eval_batch_size, num_workers=self.hparams.num_workers, shuffle=False) 
+    
+    def get_total_dataset(self):
+        
+        train_df = Custom_Dataset(self.train_path, "train", self.mode, self.tokenizer, self.hparams.input_length).dataset
+        valid_df = Custom_Dataset(self.eval_path, "valid", self.mode, self.tokenizer, self.hparams.input_length).dataset
+        
+        self.total_df= pd.concat([train_df, valid_df])
+        return self.total_df

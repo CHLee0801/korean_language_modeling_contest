@@ -46,11 +46,15 @@ class ROBERTA(pl.LightningModule):
         self.tokenizer = AutoTokenizer.from_pretrained("klue/roberta-large")
         self.model = AutoModel.from_pretrained("klue/roberta-large")
         
+        self.fold_option= hparams.fold_option
+        self.train_idx= hparams.train_idx
+        self.valid_idx= hparams.valid_idx
+        
         self.model.resize_token_embeddings(len(self.tokenizer))
         self.labels_classifier = nn.Linear(1024, self.num_label)
         self.dropout = nn.Dropout(p=0.1)
         self.relu = nn.ReLU()
-        if self.mode == 'sentiment':
+        if self.mode == 'sentiment' or self.mode == 'binary':
             self.criterion = nn.CrossEntropyLoss()
         else:
             self.criterion = nn.BCELoss()
@@ -64,6 +68,9 @@ class ROBERTA(pl.LightningModule):
         self.epoch_num = 0
         self.threshold = 0.5
 
+        #self.total_dataset= self.get_total_dataset()
+        #self.log('total dataset', len(self.total_dataset))
+        #exit(0)
 
     def forward(self, input_ids, input_mask, labels=None):
         output = self.model(
@@ -75,7 +82,7 @@ class ROBERTA(pl.LightningModule):
         output = torch.sigmoid(output)
         loss = 0
         if labels is not None:
-            if self.mode == 'sentiment':
+            if self.mode == 'sentiment' or self.mode == 'binary':
                 loss = self.criterion(output, labels)
             else:
                 loss = self.criterion(output.to(torch.float16), labels.to(torch.float16))
@@ -86,9 +93,9 @@ class ROBERTA(pl.LightningModule):
     def training_step(self, batch):
         loss, outputs = self(batch['source_ids'], batch['source_mask'], batch['labels'])
 
-        if self.mode == 'sentiment':
+        if self.mode == 'sentiment' or self.mode == 'binary':
             self.train_pred.append(torch.argmax(outputs).detach().cpu())
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
             self.train_pred.append(outputs[0].detach().cpu())
             #self.train_pred.append(torch.argmax(outputs).detach().cpu())
 
@@ -97,9 +104,9 @@ class ROBERTA(pl.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
-        if self.mode == 'sentiment':
+        if self.mode == 'sentiment' or self.mode == 'binary':
             acc = accuracy_score(self.train_gt, self.train_pred)
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
             self.train_pred = torch.stack(self.train_pred)
             self.train_gt = torch.stack(self.train_gt)
             self.train_pred = torch.where(self.train_pred > self.threshold, 1, 0)
@@ -124,9 +131,9 @@ class ROBERTA(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         loss, outputs = self(batch['source_ids'], batch['source_mask'], batch['labels'])
-        if self.mode == 'sentiment':
+        if self.mode == 'sentiment' or self.mode == 'binary':
             self.val_pred.append(torch.argmax(outputs).detach().cpu())
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
             self.val_pred.append(outputs[0].detach().cpu())
             #self.val_pred.append(torch.argmax(outputs).detach().cpu())
 
@@ -135,9 +142,9 @@ class ROBERTA(pl.LightningModule):
         return loss
 
     def on_validation_epoch_end(self):
-        if self.mode == 'sentiment':
+        if self.mode == 'sentiment' or self.mode == 'binary':
             acc = accuracy_score(self.val_gt, self.val_pred)
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
             self.val_pred = torch.stack(self.val_pred)
             self.val_gt = torch.stack(self.val_gt)
             self.val_pred = torch.where(self.val_pred > self.threshold, 1, 0)
@@ -199,16 +206,12 @@ class ROBERTA(pl.LightningModule):
 
     def val_dataloader(self):
         validation_dataset = Custom_Dataset(self.eval_path, "valid", self.mode, self.tokenizer, self.hparams.input_length)
-        return DataLoader(validation_dataset, batch_size=self.hparams.eval_batch_size, num_workers=self.hparams.num_workers, shuffle=False)
-
-
-
-
-
-
-
-
+        return DataLoader(validation_dataset, batch_size=self.hparams.eval_batch_size, num_workers=self.hparams.num_workers, shuffle=False) 
+    
+    def get_total_dataset(self):
         
-
-
-
+        train_df = Custom_Dataset(self.train_path, "train", self.mode, self.tokenizer, self.hparams.input_length).dataset
+        valid_df = Custom_Dataset(self.eval_path, "valid", self.mode, self.tokenizer, self.hparams.input_length).dataset
+        
+        self.total_df= pd.concat([train_df, valid_df])
+        return self.total_df

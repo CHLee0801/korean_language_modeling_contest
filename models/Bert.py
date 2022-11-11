@@ -44,10 +44,6 @@ class BERT(pl.LightningModule):
             self.num_label = 5
         elif self.mode == 'topic':
             self.num_label = 4
-        elif self.mode == 'topic_trinary':
-            self.num_label = 3
-        elif self.mode == 'topic_binary':
-            self.num_label = 2
         else:
             raise Exception("Wrong mode")
 
@@ -55,9 +51,10 @@ class BERT(pl.LightningModule):
         self.eval_path = hparams.eval_path
         self.tokenizer = BertTokenizerFast.from_pretrained("kykim/bert-kor-base")
         self.model = BertModel.from_pretrained("kykim/bert-kor-base")
-        #self.tokenizer = ElectraTokenizerFast.from_pretrained("kykim/electra-kor-base")
-        #self.model = ElectraModel.from_pretrained("kykim/electra-kor-base") 
 
+        self.fold_option= hparams.fold_option
+        self.train_idx= hparams.train_idx
+        self.valid_idx= hparams.valid_idx
         
         self.model.resize_token_embeddings(len(self.tokenizer))
         self.labels_classifier = nn.Linear(768, self.num_label)
@@ -67,7 +64,7 @@ class BERT(pl.LightningModule):
             self.criterion = nn.CrossEntropyLoss()
         else:
             self.criterion = nn.BCELoss()
-        #self.criterion = nn.CrossEntropyLoss()
+
         self.save_hyperparameters(hparams)
 
         self.train_pred = []
@@ -77,9 +74,9 @@ class BERT(pl.LightningModule):
         self.epoch_num = 0
         self.threshold = 0.5
 
-        #self.total_dataset= self.get_total_dataset()
-        #self.log('total dataset', len(self.total_dataset))
-        #exit(0)
+        self.total_dataset= self.get_total_dataset()
+        self.log('total dataset', len(self.total_dataset))
+
 
     def forward(self, input_ids, input_mask, labels=None):
         output = self.model(
@@ -95,7 +92,7 @@ class BERT(pl.LightningModule):
                 loss = self.criterion(output, labels)
             else:
                 loss = self.criterion(output.to(torch.float16), labels.to(torch.float16))
-            #loss = self.criterion(output, labels)
+
         return loss, output
 
 
@@ -104,9 +101,8 @@ class BERT(pl.LightningModule):
 
         if self.mode == 'sentiment':
             self.train_pred.append(torch.argmax(outputs).detach().cpu())
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
             self.train_pred.append(outputs[0].detach().cpu())
-            #self.train_pred.append(torch.argmax(outputs).detach().cpu())
 
         self.train_gt.append(batch['labels'].detach().cpu()[0])
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
@@ -115,7 +111,7 @@ class BERT(pl.LightningModule):
     def on_train_epoch_end(self):
         if self.mode == 'sentiment':
             acc = accuracy_score(self.train_gt, self.train_pred)
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
             self.train_pred = torch.stack(self.train_pred)
             self.train_gt = torch.stack(self.train_gt)
             self.train_pred = torch.where(self.train_pred > self.threshold, 1, 0)
@@ -142,9 +138,8 @@ class BERT(pl.LightningModule):
         loss, outputs = self(batch['source_ids'], batch['source_mask'], batch['labels'])
         if self.mode == 'sentiment':
             self.val_pred.append(torch.argmax(outputs).detach().cpu())
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
             self.val_pred.append(outputs[0].detach().cpu())
-            #self.val_pred.append(torch.argmax(outputs).detach().cpu())
 
         self.val_gt.append(batch['labels'].detach().cpu()[0])
 
@@ -153,7 +148,7 @@ class BERT(pl.LightningModule):
     def on_validation_epoch_end(self):
         if self.mode == 'sentiment':
             acc = accuracy_score(self.val_gt, self.val_pred)
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
             self.val_pred = torch.stack(self.val_pred)
             self.val_gt = torch.stack(self.val_gt)
             self.val_pred = torch.where(self.val_pred > self.threshold, 1, 0)
@@ -221,9 +216,6 @@ class BERT(pl.LightningModule):
         
         train_df = Custom_Dataset(self.train_path, "train", self.mode, self.tokenizer, self.hparams.input_length).dataset
         valid_df = Custom_Dataset(self.eval_path, "valid", self.mode, self.tokenizer, self.hparams.input_length).dataset
-        total_df= pd.concat([train_df, valid_df])
-
-        # 여기서 index 뽑아서 train, valid를 주면 되지 싶은디 
         
-        total_dataset= Custom_Dataset(total_df, "kfold", self.mode, self.tokenizer, self.hparams.input_length)
-        # return total_dataset
+        self.total_df= pd.concat([train_df, valid_df])
+        return self.total_df

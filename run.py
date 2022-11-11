@@ -11,9 +11,11 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.plugins import DeepSpeedPlugin
-from Evaluation_2 import evaluate
-
+from Evaluation import evaluate
+import wandb
 from models import load_model
+
+from sklearn.model_selection import StratifiedKFold
 CUDA_LAUNCH_BLOCKING=1
 def set_seed(seed):
     random.seed(seed)
@@ -94,6 +96,8 @@ if __name__ == '__main__':
         hparam.model = ""
     if "mode" not in hparam:
         hparam.mode = ""
+    if "fold_option" not in hparam:
+        hparam.fold_option = False
     #Logging into WANDB if needed
     if hparam.wandb_log:
         wandb_logger = WandbLogger(project=hparam.wandb_project, name=hparam.wandb_run_name, entity="changholee")
@@ -136,9 +140,11 @@ if __name__ == '__main__':
         checkpoint_path_2 = hparam.checkpoint_path_2,
         checkpoint_path_3 = hparam.checkpoint_path_3,
         checkpoint_path_4 = hparam.checkpoint_path_4,
-        checkpoint_path_5 = hparam.checkpoint_path_5,
         test = hparam.test,
-        model = hparam.model
+        model = hparam.model,
+        fold_option= hparam.fold_option, 
+        train_idx= None, 
+        valid_idx= None
     )
     args = argparse.Namespace(**args_dict)
 
@@ -157,13 +163,11 @@ if __name__ == '__main__':
         gradient_clip_val=args.max_grad_norm,
         enable_checkpointing=checkpoint_callback,
         check_val_every_n_epoch=args.check_val_every_n_epoch,
-        #val_check_interval=args.val_check_interval,
-        #default_root_dir=args.output_dir,
+
         logger = wandb_logger,
         callbacks = callbacks,
         strategy = args.accelerator,
     )
-
     
     if args.check_validation == True:
         Model_1 = load_model('bert')
@@ -179,9 +183,32 @@ if __name__ == '__main__':
             Model = load_model('electra')
         else:
             raise Exception('currently not supporting given model')
-        model = Model(args, args.mode)
 
-        set_seed(40) # very important to set random seed since we mix training data during training. requires for DDP. 
-        
-        trainer = pl.Trainer(**train_params)
-        trainer.fit(model)
+        seed= 42
+        set_seed(seed) # very important to set random seed since we mix training data during training. requires for DDP. 
+        model = Model(args, args.mode)
+        if args.fold_option == True:
+            total_df= model.get_total_dataset()
+            total_label= total_df['label']
+            
+            org_checkpoint_path= args.checkpoint_path
+            kfold= StratifiedKFold(n_splits= 5, shuffle= True, random_state= seed)  
+            cnt = 0
+            for fold, (train_idx, valid_idx) in enumerate(kfold.split(total_df, total_label)):
+                args.checkpoint_path=f'{org_checkpoint_path}/fold{fold}_'
+                # os.makedirs(args.checkpoint_path, exist_ok=True)
+                args.train_idx= train_idx
+                args.valid_idx= valid_idx
+                print('train, valid length: ', len(args.train_idx), len(args.valid_idx))
+                print('train 0 idx :', args.train_idx[:10])
+                print('valid 0 idx :', args.valid_idx[:10])
+                wandb_logger = WandbLogger(project=hparam.wandb_project, name=f"{hparam.wandb_run_name}_{cnt}", entity="changholee")
+                train_params["logger"] = wandb_logger
+                model = Model(args, args.mode)
+                trainer = pl.Trainer(**train_params)
+                trainer.fit(model)
+                cnt += 1
+                wandb.finish()
+        else:
+            trainer = pl.Trainer(**train_params)
+            trainer.fit(model)

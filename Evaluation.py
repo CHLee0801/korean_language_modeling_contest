@@ -117,7 +117,7 @@ def evaluation_f1(true_data, pred_data):
 
 def evaluate(args, Model_1, Model_2, Model_3):
 
-    topic_list = ['본품','패키지/구성품', '브랜드'] # '제품 전체', '본품',
+    topic_list = ['제품 전체', '본품', '패키지/구성품', '브랜드']
     category_list = ['편의성', '디자인', '인지도','가격','다양성']
 
     dropout = nn.Dropout(p=0.1)
@@ -146,12 +146,12 @@ def evaluate(args, Model_1, Model_2, Model_3):
     
     ############### model_1 ###############
 
-    model_1 = Model_1(args, "topic_binary")
+    model_1 = Model_1(args, "topic")
 
     topic_grad = {}
     topic_classifier_grad = {}
-    if args.checkpoint_path_2 != "":
-        sent_model = torch.load(args.checkpoint_path_2)
+    if args.checkpoint_path_3 != "":
+        sent_model = torch.load(args.checkpoint_path_3)
         
         for key, value in sent_model.items():
             if 'classifier' in key:
@@ -166,34 +166,14 @@ def evaluate(args, Model_1, Model_2, Model_3):
     topic_classifier = model_1.labels_classifier
     topic_classifier.load_state_dict(topic_classifier_grad)
 
-    model_4 = Model_1(args, "topic_trinary")
-
-    topic_grad = {}
-    topic_classifier_grad = {}
-    if args.checkpoint_path_5 != "":
-        sent_model = torch.load(args.checkpoint_path_5)
-        
-        for key, value in sent_model.items():
-            if 'classifier' in key:
-                topic_classifier_grad[key.split('.')[-1]] = value
-            else:
-                topic_grad['model.'+key] = value
-        model_4.load_state_dict(topic_grad, strict=False)
-    
-    model_4.eval()
-    model_4.to('cuda')
-    tokenizer_4 = model_4.tokenizer
-    topic_classifier_2 = model_4.labels_classifier
-    topic_classifier_2.load_state_dict(topic_classifier_grad)
-
     ############### model_2 ###############
 
     model_2 = Model_1(args, "category")
     
     category_grad={}
     category_classifier_grad = {}
-    if args.checkpoint_path_3 != "":
-        cat_model = torch.load(args.checkpoint_path_3)
+    if args.checkpoint_path_2 != "":
+        cat_model = torch.load(args.checkpoint_path_2)
         
         for key, value in cat_model.items():
             if 'classifier' in key:
@@ -210,7 +190,7 @@ def evaluate(args, Model_1, Model_2, Model_3):
 
     ############### model_3 ###############
 
-    model_3 = Model_2(args, "sentiment")
+    model_3 = Model_1(args, "sentiment")
     
     sentiment_grad={}
     sent_classifier_grad = {}
@@ -232,15 +212,6 @@ def evaluate(args, Model_1, Model_2, Model_3):
 
     #########################################################
 
-    # If folder doesn't exist, then create it.
-    MYDIR = ("/".join((args.output_log.split('/'))[:-1]))
-    CHECK_FOLDER = os.path.isdir(MYDIR)
-    if not CHECK_FOLDER:
-        os.makedirs(MYDIR)
-        print("created folder : ", MYDIR)
-    else:
-        print(MYDIR, "folder already exists.")
-
     if args.test == True:
         true_data = jsonlload("data/nikluge-sa-2022-test.jsonl")
         sentence_list_for_topic = []
@@ -251,7 +222,7 @@ def evaluate(args, Model_1, Model_2, Model_3):
     else:
         dataset_1 = Custom_Dataset(args.eval_path, "valid", "trinary", tokenizer_0, args.input_length)
 
-    print('Length of 3way category validation data: ',len(dataset_1))
+    print('Length of category validation data: ',len(dataset_1))
     loader_1 = DataLoader(dataset_1, batch_size=args.eval_batch_size, shuffle=False)
 
     first_out = []
@@ -294,7 +265,7 @@ def evaluate(args, Model_1, Model_2, Model_3):
 
 
     dataset_2_0 = Custom_Dataset(second_out, "eval", "category", tokenizer_2, args.input_length)
-    print('Length of 5way category validation data: ',len(dataset_2_0))
+    print('Length of topic validation data: ',len(dataset_2_0))
     loader_2_0 = DataLoader(dataset_2_0, batch_size=args.eval_batch_size, shuffle=False)
 
     category_pred = []
@@ -320,12 +291,9 @@ def evaluate(args, Model_1, Model_2, Model_3):
                 third_out.append([second_out[idx][0], category_list[ii]])
 
     dataset_2_1 = Custom_Dataset(third_out, "eval", "topic", tokenizer_1, args.input_length)
-    print('Length of 3way topic validation data: ',len(dataset_2_1))
+    print('Length of topic validation data: ',len(dataset_2_1))
     loader_2_1 = DataLoader(dataset_2_1, batch_size=args.eval_batch_size, shuffle=False)
     
-    fourth_out = []
-    fifth_out = []
-    sentiment_list = []
     topic_pred = []
     for batch in tqdm(iter(loader_2_1)):
         with torch.no_grad():
@@ -338,45 +306,17 @@ def evaluate(args, Model_1, Model_2, Model_3):
             output = torch.sigmoid(output)
             if sum(torch.where(output > 0.5, 1, 0)[0]) == 0:
                 output[0][torch.argmax(output)] = 1
-            fourth_out.append(output[0].detach().cpu())
-    
-    fourth_out = torch.stack(fourth_out)
-    fourth_out = torch.where(fourth_out > 0.5, 1, 0)
-    
-    for idx in range(len(third_out)):
-        if fourth_out[idx][0] == 1:
-            sentiment_list.append([third_out[idx][0], f"제품 전체#{third_out[idx][1]}"])
-        ##########################################################################
-        #if fourth_out[idx][1] == 1:
-        #    sentiment_list.append([third_out[idx][0], f"본품#{third_out[idx][1]}"])
-        ##########################################################################
-        if fourth_out[idx][1] == 1:
-            fifth_out.append([third_out[idx][0], third_out[idx][1]])
-
-    dataset_2_2 = Custom_Dataset(fifth_out, "eval", "topic", tokenizer_4, args.input_length)
-    print('Length of 2way topic validation data: ',len(dataset_2_2))
-    loader_2_2 = DataLoader(dataset_2_2, batch_size=args.eval_batch_size, shuffle=False)
-
-    for batch in tqdm(iter(loader_2_2)):
-        with torch.no_grad():
-            output = model_4.model(
-                batch['source_ids'].cuda(),
-                batch['source_mask'].cuda()
-            )
-            output = dropout(output.pooler_output)
-            output = topic_classifier_2(output)
-            output = torch.sigmoid(output)
-            if sum(torch.where(output > 0.5, 1, 0)[0]) == 0:
-                output[0][torch.argmax(output)] = 1
             topic_pred.append(output[0].detach().cpu())
-
+    
     topic_pred = torch.stack(topic_pred)
     topic_pred = torch.where(topic_pred > 0.5, 1, 0)
-    for idd in range(len(fifth_out)):
-        for ii in range(3):
-            if topic_pred[idd][ii] == 1:
-                sentiment_list.append([fifth_out[idd][0], f"{topic_list[ii]}#{fifth_out[idd][1]}"])
+    
+    sentiment_list = []
 
+    for idd in range(len(third_out)):
+        for ii in range(4):
+            if topic_pred[idd][ii] == 1:
+                sentiment_list.append([third_out[idd][0], f"{topic_list[ii]}#{third_out[idd][1]}"])
 
     dataset_3 = Custom_Dataset(sentiment_list, "eval", "sentiment", tokenizer_3, args.input_length)
     print('Length of sentiment validation data: ',len(dataset_3))
@@ -425,7 +365,7 @@ def evaluate(args, Model_1, Model_2, Model_3):
             }
             pred_data.append(sample_dict)
         
-        outfile_name = "output_file/dev_result_8.jsonl"
+        outfile_name = "output_file/dev_result_12.jsonl"
         with open(outfile_name , encoding= "utf-8" ,mode="w") as file: 
             for i in pred_data: 
                 file.write(json.dumps(i,ensure_ascii=False) + "\n")
@@ -446,7 +386,7 @@ def evaluate(args, Model_1, Model_2, Model_3):
                 'annotation':annotation_list
             }
             pred_data.append(sample_dict)
-        outfile_name = "output_file/test_result_8.jsonl"
+        outfile_name = "output_file/tunib_best.jsonl"
         with open(outfile_name , encoding= "utf-8" ,mode="w") as file: 
             for i in pred_data: 
                 file.write(json.dumps(i,ensure_ascii=False) + "\n")
