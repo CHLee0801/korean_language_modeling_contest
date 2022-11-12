@@ -14,10 +14,10 @@
     "accelerator" : "deepspeed_stage_2",
     "CUDA_VISIBLE_DEVICES" : "10",
     "check_validation" : true,
-    "checkpoint_path_1" : "ckpt/category_3way/fold2_trinary4.pt",
-    "checkpoint_path_2" : "ckpt/category_5way/fold2_category4.pt",
-    "checkpoint_path_3" : "ckpt/topic/fold2_topic4.pt",
-    "checkpoint_path_4" : "ckpt/sentiment/fold2_sentiment2.pt",
-    "output_log":"output_file/test2.jsonl",
+    "checkpoint_path_1" : "ckpt/category_3way/fold2_trinary.pt",
+    "checkpoint_path_2" : "ckpt/category_5way/fold2_category.pt",
+    "checkpoint_path_3" : "ckpt/topic/fold2_topic.pt",
+    "checkpoint_path_4" : "ckpt/sentiment/fold2_sentiment.pt",
+    "output_log":"output_file/test_result_2.jsonl",
     "test": true
 }

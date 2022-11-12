@@ -128,9 +128,9 @@ def evaluate(args, Model_1, Model_2, Model_3):
     trinary_grad = {}
     trinary_classifier_grad = {}
     if args.checkpoint_path_1 != "":
-        sent_model = torch.load(args.checkpoint_path_1)
+        model_3way = torch.load(args.checkpoint_path_1)
         
-        for key, value in sent_model.items():
+        for key, value in model_3way.items():
             if 'classifier' in key:
                 trinary_classifier_grad[key.split('.')[-1]] = value
             else:
@@ -151,9 +151,9 @@ def evaluate(args, Model_1, Model_2, Model_3):
     category_grad={}
     category_classifier_grad = {}
     if args.checkpoint_path_2 != "":
-        cat_model = torch.load(args.checkpoint_path_2)
+        model_5way = torch.load(args.checkpoint_path_2)
         
-        for key, value in cat_model.items():
+        for key, value in model_5way.items():
             if 'classifier' in key:
                 category_classifier_grad[key.split('.')[-1]] = value
             else:
@@ -173,14 +173,14 @@ def evaluate(args, Model_1, Model_2, Model_3):
     topic_grad = {}
     topic_classifier_grad = {}
     if args.checkpoint_path_3 != "":
-        sent_model = torch.load(args.checkpoint_path_3)
+        model_topic = torch.load(args.checkpoint_path_3)
         
-        for key, value in sent_model.items():
+        for key, value in model_topic.items():
             if 'classifier' in key:
                 topic_classifier_grad[key.split('.')[-1]] = value
             else:
                 topic_grad['model.'+key] = value
-        model_1.load_state_dict(topic_grad, strict=False)
+        model_2.load_state_dict(topic_grad, strict=False)
     
     model_2.eval()
     model_2.to('cuda')
@@ -195,9 +195,9 @@ def evaluate(args, Model_1, Model_2, Model_3):
     sentiment_grad={}
     sent_classifier_grad = {}
     if args.checkpoint_path_4 != "":
-        sent_model = torch.load(args.checkpoint_path_4)
+        model_sent = torch.load(args.checkpoint_path_4)
         
-        for key, value in sent_model.items():
+        for key, value in model_sent.items():
             if 'classifier' in key:
                 sent_classifier_grad[key.split('.')[-1]] = value
             else:
@@ -274,10 +274,6 @@ def evaluate(args, Model_1, Model_2, Model_3):
     category_pred = torch.stack(category_pred)
     category_pred = torch.where(category_pred > 0.5, 1, 0)
 
-    print("third_out", len(third_out))
-    print(second_out[:10])
-    print(category_pred[:10])
-    exit()
     for idx in range(len(second_out)):
         for ii in range(5):
             if category_pred[idx][ii] == 1:
