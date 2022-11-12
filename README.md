@@ -108,8 +108,11 @@ python run.py --config configs/bert/bert_sentiment.json
 config 폴더에 있는 'write_*.json' 파일에서 'checkpoint_path_*'를 수정해주어야 합니다.
 
 > checkpoint_path_1 : Step 1-1의 모델 Checkpoints
+
 > checkpoint_path_2 : Step 1-2의 모델 Checkpoints
+
 > checkpoint_path_3 : Step 2의 모델 Checkpoints
+
 > checkpoint_path_4 : Step 3의 모델 Checkpoints
 
 Step 2에서 Checkpoint를 받아서 활용할 경우 config 파일들을 수정할 필요가 없이 바로 Output_file 생성이 가능합니다.
