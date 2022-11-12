@@ -73,7 +73,7 @@ bash make_data.sh
 
 Cross Validation에서 가장 높은 성능을 보인 5개의 모델 Checkpoint입니다. Section 3, Step 4에서 바로 활용해 최종 파일 제작을 할 수 있습니다.
 ```
-gdown https://drive.google.com/uc?id=12DWUApFf25YC_BnKRyRjxOqbeZeKUilK
+gdown https://drive.google.com/uc?id=1tGnXzMLEVfhJGDEtn9rszIV0eNZOdce1
 unzip ckpt.zip
 ```
 
