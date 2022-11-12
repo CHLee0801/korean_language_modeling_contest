@@ -125,28 +125,50 @@ def evaluate(args, Model_1, Model_2, Model_3):
     
     model_0 = Model_1(args, "trinary")
 
-    topic_grad = {}
-    topic_classifier_grad = {}
+    trinary_grad = {}
+    trinary_classifier_grad = {}
     if args.checkpoint_path_1 != "":
         sent_model = torch.load(args.checkpoint_path_1)
         
         for key, value in sent_model.items():
             if 'classifier' in key:
-                topic_classifier_grad[key.split('.')[-1]] = value
+                trinary_classifier_grad[key.split('.')[-1]] = value
             else:
-                topic_grad['model.'+key] = value
+                trinary_grad['model.'+key] = value
 
-        model_0.load_state_dict(topic_grad, strict=False)
+        model_0.load_state_dict(trinary_grad, strict=False)
     
     model_0.eval()
     model_0.to('cuda')
     tokenizer_0 = model_0.tokenizer
-    first_classifier = model_0.labels_classifier
-    first_classifier.load_state_dict(topic_classifier_grad)
+    trinary_classifier = model_0.labels_classifier
+    trinary_classifier.load_state_dict(trinary_classifier_grad)
     
     ############### model_1 ###############
 
-    model_1 = Model_1(args, "topic")
+    model_1 = Model_1(args, "category")
+    
+    category_grad={}
+    category_classifier_grad = {}
+    if args.checkpoint_path_2 != "":
+        cat_model = torch.load(args.checkpoint_path_2)
+        
+        for key, value in cat_model.items():
+            if 'classifier' in key:
+                category_classifier_grad[key.split('.')[-1]] = value
+            else:
+                category_grad['model.'+key] = value
+        model_1.load_state_dict(category_grad, strict=False)
+    
+    model_1.eval()
+    model_1.to('cuda')
+    tokenizer_1 = model_1.tokenizer
+    category_classifier = model_1.labels_classifier
+    category_classifier.load_state_dict(category_classifier_grad)
+
+    ############### model_2 ###############
+
+    model_2 = Model_1(args, "topic")
 
     topic_grad = {}
     topic_classifier_grad = {}
@@ -160,33 +182,11 @@ def evaluate(args, Model_1, Model_2, Model_3):
                 topic_grad['model.'+key] = value
         model_1.load_state_dict(topic_grad, strict=False)
     
-    model_1.eval()
-    model_1.to('cuda')
-    tokenizer_1 = model_1.tokenizer
-    topic_classifier = model_1.labels_classifier
-    topic_classifier.load_state_dict(topic_classifier_grad)
-
-    ############### model_2 ###############
-
-    model_2 = Model_1(args, "category")
-    
-    category_grad={}
-    category_classifier_grad = {}
-    if args.checkpoint_path_2 != "":
-        cat_model = torch.load(args.checkpoint_path_2)
-        
-        for key, value in cat_model.items():
-            if 'classifier' in key:
-                category_classifier_grad[key.split('.')[-1]] = value
-            else:
-                category_grad['model.'+key] = value
-        model_2.load_state_dict(category_grad, strict=False)
-    
     model_2.eval()
     model_2.to('cuda')
     tokenizer_2 = model_2.tokenizer
-    category_classifier = model_2.labels_classifier
-    category_classifier.load_state_dict(category_classifier_grad)
+    topic_classifier = model_2.labels_classifier
+    topic_classifier.load_state_dict(topic_classifier_grad)
 
     ############### model_3 ###############
 
@@ -214,28 +214,29 @@ def evaluate(args, Model_1, Model_2, Model_3):
 
     if args.test == True:
         true_data = jsonlload("data/nikluge-sa-2022-test.jsonl")
-        sentence_list_for_topic = []
-        for tdata in true_data:
-            sentence_list_for_topic.append([tdata['sentence_form']])
-        
-        dataset_1 = Custom_Dataset(sentence_list_for_topic, "eval", "trinary", tokenizer_0, args.input_length)
     else:
-        dataset_1 = Custom_Dataset(args.eval_path, "valid", "trinary", tokenizer_0, args.input_length)
+        true_data = jsonlload("data/nikluge-sa-2022-dev.jsonl")
 
-    print('Length of category validation data: ',len(dataset_1))
-    loader_1 = DataLoader(dataset_1, batch_size=args.eval_batch_size, shuffle=False)
+    sentence_list_for_topic = []
+    for tdata in true_data:
+        sentence_list_for_topic.append([tdata['sentence_form']])
+        
+    dataset_1_0 = Custom_Dataset(sentence_list_for_topic, "eval", "trinary", tokenizer_0, args.input_length)
+
+    print('Length of category validation data: ',len(dataset_1_0))
+    loader_1_0 = DataLoader(dataset_1_0, batch_size=args.eval_batch_size, shuffle=False)
 
     first_out = []
     second_out = []
     third_out = []
-    for batch in tqdm(iter(loader_1)):
+    for batch in tqdm(iter(loader_1_0)):
         with torch.no_grad():
             output = model_0.model(
                 batch['source_ids'].cuda(),
                 batch['source_mask'].cuda()
             )
             output = dropout(output.pooler_output)
-            output = first_classifier(output)
+            output = trinary_classifier(output)
             output = torch.sigmoid(output)
             if sum(torch.where(output > 0.5, 1, 0)[0]) == 0:
                 output[0][torch.argmax(output)] = 1
@@ -244,34 +245,22 @@ def evaluate(args, Model_1, Model_2, Model_3):
     first_out = torch.stack(first_out)
     first_out = torch.where(first_out > 0.5, 1, 0)
 
-    if args.test == False:
-        first_dataset = pd.read_csv(args.eval_path, encoding='utf-8')
-        for idx, row in first_dataset.iterrows():
-            if first_out[idx][0] == 1:
-                third_out.append([row['input'], '품질'])
-            if first_out[idx][1] == 1:
-                third_out.append([row['input'], '일반'])
-            if first_out[idx][2] == 1:
-                second_out.append([row['input']])
-    else:
-        for idx in range(len(sentence_list_for_topic)):
-            if first_out[idx][0] == 1:
-                third_out.append([sentence_list_for_topic[idx][0], '품질'])
-            if first_out[idx][1] == 1:
-                third_out.append([sentence_list_for_topic[idx][0], '일반'])
-            if first_out[idx][2] == 1:
-                second_out.append([sentence_list_for_topic[idx][0]])
+    for idx in range(len(sentence_list_for_topic)):
+        if first_out[idx][0] == 1:
+            third_out.append([sentence_list_for_topic[idx][0], '품질'])
+        if first_out[idx][1] == 1:
+            third_out.append([sentence_list_for_topic[idx][0], '일반'])
+        if first_out[idx][2] == 1:
+            second_out.append([sentence_list_for_topic[idx][0]])
 
-
-
-    dataset_2_0 = Custom_Dataset(second_out, "eval", "category", tokenizer_2, args.input_length)
-    print('Length of topic validation data: ',len(dataset_2_0))
-    loader_2_0 = DataLoader(dataset_2_0, batch_size=args.eval_batch_size, shuffle=False)
+    dataset_1_1 = Custom_Dataset(second_out, "eval", "category", tokenizer_1, args.input_length)
+    print('Length of topic validation data: ',len(dataset_1_1))
+    loader_1_1 = DataLoader(dataset_1_1, batch_size=args.eval_batch_size, shuffle=False)
 
     category_pred = []
-    for batch in tqdm(iter(loader_2_0)):
+    for batch in tqdm(iter(loader_1_1)):
         with torch.no_grad():
-            output = model_2.model(
+            output = model_1.model(
                 batch['source_ids'].cuda(),
                 batch['source_mask'].cuda()
             )
@@ -285,19 +274,25 @@ def evaluate(args, Model_1, Model_2, Model_3):
     category_pred = torch.stack(category_pred)
     category_pred = torch.where(category_pred > 0.5, 1, 0)
 
+    print("third_out", len(third_out))
+    print(second_out[:10])
+    print(category_pred[:10])
+    exit()
     for idx in range(len(second_out)):
         for ii in range(5):
             if category_pred[idx][ii] == 1:
                 third_out.append([second_out[idx][0], category_list[ii]])
 
-    dataset_2_1 = Custom_Dataset(third_out, "eval", "topic", tokenizer_1, args.input_length)
-    print('Length of topic validation data: ',len(dataset_2_1))
-    loader_2_1 = DataLoader(dataset_2_1, batch_size=args.eval_batch_size, shuffle=False)
+    print("third_out", len(third_out))
+
+    dataset_2 = Custom_Dataset(third_out, "eval", "topic", tokenizer_2, args.input_length)
+    print('Length of topic validation data: ',len(dataset_2))
+    loader_2 = DataLoader(dataset_2, batch_size=args.eval_batch_size, shuffle=False)
     
     topic_pred = []
-    for batch in tqdm(iter(loader_2_1)):
+    for batch in tqdm(iter(loader_2)):
         with torch.no_grad():
-            output = model_1.model(
+            output = model_2.model(
                 batch['source_ids'].cuda(),
                 batch['source_mask'].cuda()
             )
@@ -351,43 +346,21 @@ def evaluate(args, Model_1, Model_2, Model_3):
 
     if args.test == False:
         true_data = jsonlload("data/nikluge-sa-2022-dev.jsonl")
-        pred_data = []
-        cnt = 0
-        for data in true_data:
-            annotation_list = []
-            if data['sentence_form'] in final_output_dict:
-                annotation_list = final_output_dict[data['sentence_form']]
-                cnt += 1
-            sample_dict = {
-                'id':data['id'],
-                'sentence_form':data['sentence_form'],
-                'annotation':annotation_list
-            }
-            pred_data.append(sample_dict)
-        
-        outfile_name = "output_file/dev_result_12.jsonl"
-        with open(outfile_name , encoding= "utf-8" ,mode="w") as file: 
-            for i in pred_data: 
-                file.write(json.dumps(i,ensure_ascii=False) + "\n")
-        print(evaluation_f1(true_data, pred_data))
-    
     else:
         true_data = jsonlload("data/nikluge-sa-2022-test.jsonl")
-        pred_data = []
-        cnt = 0
-        for data in true_data:
-            annotation_list = []
-            if data['sentence_form'] in final_output_dict:
-                annotation_list = final_output_dict[data['sentence_form']]
-                cnt += 1
-            sample_dict = {
-                'id':data['id'],
-                'sentence_form':data['sentence_form'],
-                'annotation':annotation_list
-            }
-            pred_data.append(sample_dict)
-        outfile_name = "output_file/tunib_best.jsonl"
-        with open(outfile_name , encoding= "utf-8" ,mode="w") as file: 
-            for i in pred_data: 
-                file.write(json.dumps(i,ensure_ascii=False) + "\n")
+    pred_data = []
+
+    for data in true_data:
+        annotation_list = []
+        if data['sentence_form'] in final_output_dict:
+            annotation_list = final_output_dict[data['sentence_form']]
+        sample_dict = {
+            'id':data['id'],
+            'sentence_form':data['sentence_form'],
+            'annotation':annotation_list
+        }
+        pred_data.append(sample_dict)
     
+    with open(args.output_log , encoding= "utf-8" ,mode="w") as file: 
+        for i in pred_data: 
+            file.write(json.dumps(i,ensure_ascii=False) + "\n")

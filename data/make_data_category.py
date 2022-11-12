@@ -33,116 +33,76 @@ category_dict_base = {
     '브랜드' : ['품질', '일반', '인지도', '가격', '디자인']
 }
 
-file_2 = "/home/ubuntu/ch.lee/momal/data/nikluge-sa-2022-train.jsonl"
-file_3 = "/home/ubuntu/ch.lee/momal/data/nikluge-sa-2022-dev.jsonl"
-sent_list = ["긍정", "부정", "중립", "없음"]
+file_2 = "data/nikluge-sa-2022-train.jsonl"
+file_3 = "data/nikluge-sa-2022-dev.jsonl"
+sent_list = ["긍정", "부정", "중립"]
 sent_dict = {
     "positive":"긍정",
     "negative":"부정",
     "neutral":"중립"
 }
 
-train_list = []
-file_2_out = []
-file_2_stats = [0,0,0,0]
-first_list = []
-second_list = []
-third_list = []
-fourth_list = []
+train_list_3way = []
+train_list_5way = []
+
 with jsonlines.open(file_2) as f:
     for line in f:
         sentence_input = line['sentence_form']
+        category_sub_dict = {}
         for a in line['annotation']:
             topic, category = a[0].split('#')
             sentiment = sent_dict[a[2]]
-            what = [0,0,0,0,0,0,0]
-            what[category_dict[category]] += 1
-            query = f"{topic} 측면에 대한 감정은 {sentiment}이다."
-            if [sentence_input, query, what] in train_list:
-                continue
-            train_list.append([sentence_input, query, what])
+            category_sub_dict[category] = category_dict[category]
 
-file_3_stats = [0,0,0,0]
-dev_list = []
+        category_3way_list = [0,0,0]
+        category_5way_list = [0,0,0,0,0]
+        for cat in category_sub_dict:
+            if category_sub_dict[cat] < 2:
+                category_3way_list[category_sub_dict[cat]] = 1
+            else:
+                category_3way_list[2] = 1
+                category_5way_list[category_sub_dict[cat]-2] = 1
+
+        if category_3way_list != [0,0,0]:
+            train_list_3way.append([sentence_input, category_3way_list])
+        if category_5way_list != [0,0,0,0,0]:
+            train_list_5way.append([sentence_input, category_5way_list])
+
+
+dev_list_3way = []
+dev_list_5way = []
+
 with jsonlines.open(file_3) as f:
     for line in f:
         sentence_input = line['sentence_form']
+        category_sub_dict = {}
         for a in line['annotation']:
             topic, category = a[0].split('#')
             sentiment = sent_dict[a[2]]
-            what = [0,0,0,0,0,0,0]
-            what[category_dict[category]] += 1
-            query = f"{topic} 측면에 대한 감정은 {sentiment}이다."
-            if [sentence_input, query, what] in dev_list:
-                continue
-            dev_list.append([sentence_input, query, what])
+            category_sub_dict[category] = category_dict[category]
 
-print(len(train_list))
-print(len(dev_list))
-
-headers = ["input", "entity", "label"]
-output_df = pd.DataFrame(train_list)
-output_df_2 = pd.DataFrame(dev_list)
-output_df.to_csv("/home/ubuntu/ch.lee/momal/data/ver4/category_train.csv", header=headers, index=False)
-output_df_2.to_csv("/home/ubuntu/ch.lee/momal/data/ver4/category_dev.csv", header=headers, index=False)
-exit()
-train_list = []
-file_2_out = []
-file_2_stats = [0,0,0,0, 0, 0, 0]
-first_list = []
-second_list = []
-third_list = []
-fourth_list = []
-with jsonlines.open(file_2) as f:
-    for line in f:
-        sentence_input = line['sentence_form']
-        category_sub_list = []
-        topic_sub_dict = {}
-        for a in line['annotation']:
-            topic, category = a[0].split('#')
-            if topic not in topic_sub_dict:
-                topic_sub_dict[topic] = [category_dict[category]]
+        category_3way_list = [0,0,0]
+        category_5way_list = [0,0,0,0,0]
+        for cat in category_sub_dict:
+            if category_sub_dict[cat] < 2:
+                category_3way_list[category_sub_dict[cat]] = 1
             else:
-                if category_dict[category] not in topic_sub_dict[topic]:
-                    topic_sub_dict[topic].append(category_dict[category])
-        
-        for ttt in topic_sub_dict:
-            what = [0,0,0,0, 0, 0, 0]
-            for ww in topic_sub_dict[ttt]:
-                what[ww] = 1
-                file_2_stats[ww] += 1
-            train_list.append([sentence_input, topic, what])
+                category_3way_list[2] = 1
+                category_5way_list[category_sub_dict[cat]-2] = 1
 
+        if category_3way_list != [0,0,0]:
+            dev_list_3way.append([sentence_input, category_3way_list])
+        if category_5way_list != [0,0,0,0,0]:
+            dev_list_5way.append([sentence_input, category_5way_list])
 
-file_3_stats = [0,0,0,0, 0, 0, 0]
-dev_list = []
-with jsonlines.open(file_3) as f:
-    for line in f:
-        sentence_input = line['sentence_form']
-        category_sub_list = []
-        topic_sub_dict = {}
-        for a in line['annotation']:
-            topic, category = a[0].split('#')
-            if topic not in topic_sub_dict:
-                topic_sub_dict[topic] = [category_dict[category]]
-            else:
-                if category_dict[category] not in topic_sub_dict[topic]:
-                    topic_sub_dict[topic].append(category_dict[category])
-        
-        for ttt in topic_sub_dict:
-            what = [0,0,0,0, 0, 0, 0]
-            for ww in topic_sub_dict[ttt]:
-                what[ww] = 1
-                file_3_stats[ww] += 1
-            dev_list.append([sentence_input, topic, what])
+headers = ["input", "label"]
+output_df_0 = pd.DataFrame(train_list_3way)
+output_df_1 = pd.DataFrame(dev_list_3way)
+output_df_2 = pd.DataFrame(train_list_5way)
+output_df_3 = pd.DataFrame(dev_list_5way)
+output_df_0.to_csv("data/final_version/0_category_3way_train.csv", header=headers, index=False)
+output_df_1.to_csv("data/final_version/0_category_3way_dev.csv", header=headers, index=False)
+output_df_2.to_csv("data/final_version/1_category_5way_train.csv", header=headers, index=False)
+output_df_3.to_csv("data/final_version/1_category_5way_dev.csv", header=headers, index=False)
 
-
-print(len(train_list))
-print(len(dev_list))
-print(file_2_stats)
-print(file_3_stats)
-headers = ["input", "entity", "label"]
-output_df = pd.DataFrame(train_list)
-output_df_2 = pd.DataFrame(dev_list)
-output_df.to_csv("/home/ubuntu/ch.lee/momal/data/ver2/category_train.csv", header=headers, index=False)
-output_df_2.to_csv("/home/ubuntu/ch.lee/momal/data/ver2/category_dev.csv", header=headers, index=False)
+print("Category completed!")

@@ -50,10 +50,10 @@ class ELECTRA(pl.LightningModule):
 
         self.train_path = hparams.train_path
         self.eval_path = hparams.eval_path
-        #self.tokenizer = ElectraTokenizerFast.from_pretrained("beomi/KcELECTRA-base-v2022")
-        #self.model = ElectraModel.from_pretrained("beomi/KcELECTRA-base-v2022") 
-        self.tokenizer = AutoTokenizer.from_pretrained('tunib/electra-ko-base')
-        self.model = AutoModel.from_pretrained('tunib/electra-ko-base')
+        self.tokenizer = ElectraTokenizerFast.from_pretrained("beomi/KcELECTRA-base-v2022")
+        self.model = ElectraModel.from_pretrained("beomi/KcELECTRA-base-v2022") 
+        #self.tokenizer = AutoTokenizer.from_pretrained('tunib/electra-ko-base')
+        #self.model = AutoModel.from_pretrained('tunib/electra-ko-base')
 
         self.fold_option= hparams.fold_option
         self.train_idx= hparams.train_idx
@@ -68,7 +68,7 @@ class ELECTRA(pl.LightningModule):
             self.criterion = nn.CrossEntropyLoss()
         else:
             self.criterion = nn.BCELoss()
-        #self.criterion = nn.CrossEntropyLoss()
+
         self.save_hyperparameters(hparams)
 
         self.train_pred = []
@@ -95,7 +95,6 @@ class ELECTRA(pl.LightningModule):
                 loss = self.criterion(output, labels)
             else:
                 loss = self.criterion(output.to(torch.float16), labels.to(torch.float16))
-            #loss = self.criterion(output, labels)
         return loss, output
 
 
@@ -104,9 +103,8 @@ class ELECTRA(pl.LightningModule):
 
         if self.mode == 'sentiment':
             self.train_pred.append(torch.argmax(outputs).detach().cpu())
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
             self.train_pred.append(outputs[0].detach().cpu())
-            #self.train_pred.append(torch.argmax(outputs).detach().cpu())
 
         self.train_gt.append(batch['labels'].detach().cpu()[0])
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
@@ -115,7 +113,7 @@ class ELECTRA(pl.LightningModule):
     def on_train_epoch_end(self):
         if self.mode == 'sentiment':
             acc = accuracy_score(self.train_gt, self.train_pred)
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
             self.train_pred = torch.stack(self.train_pred)
             self.train_gt = torch.stack(self.train_gt)
             self.train_pred = torch.where(self.train_pred > self.threshold, 1, 0)
@@ -142,9 +140,8 @@ class ELECTRA(pl.LightningModule):
         loss, outputs = self(batch['source_ids'], batch['source_mask'], batch['labels'])
         if self.mode == 'sentiment':
             self.val_pred.append(torch.argmax(outputs).detach().cpu())
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
+        elif self.mode == 'topic' or self.mode == 'trinary':
             self.val_pred.append(outputs[0].detach().cpu())
-            #self.val_pred.append(torch.argmax(outputs).detach().cpu())
 
         self.val_gt.append(batch['labels'].detach().cpu()[0])
 
@@ -153,7 +150,7 @@ class ELECTRA(pl.LightningModule):
     def on_validation_epoch_end(self):
         if self.mode == 'sentiment':
             acc = accuracy_score(self.val_gt, self.val_pred)
-        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category' or self.mode == 'topic_trinary' or self.mode == 'topic_binary':
+        elif self.mode == 'topic' or self.mode == 'trinary' or self.mode == 'category':
             self.val_pred = torch.stack(self.val_pred)
             self.val_gt = torch.stack(self.val_gt)
             self.val_pred = torch.where(self.val_pred > self.threshold, 1, 0)

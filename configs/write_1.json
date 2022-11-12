@@ -1,0 +1,23 @@
+{
+    "input_length" : 128,
+    "output_length" : 128,
+    "output_dir" : "",
+    "train_path" : "data/final_version/0_category_3way_train.csv",
+    "eval_path":"data/final_version/0_category_3way_dev.csv",
+    "train_batch_size" : 1,
+    "eval_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "learning_rate" : 1e-5,
+    "ngpu" : 1,
+    "num_workers" : 0,
+    "check_val_every_n_epoch":1,
+    "accelerator" : "deepspeed_stage_2",
+    "CUDA_VISIBLE_DEVICES" : "9",
+    "check_validation" : true,
+    "checkpoint_path_1" : "ckpt/category_3way/fold1_trinary4.pt",
+    "checkpoint_path_2" : "ckpt/category_5way/fold1_category4.pt",
+    "checkpoint_path_3" : "ckpt/topic/fold1_topic4.pt",
+    "checkpoint_path_4" : "ckpt/sentiment/fold1_sentiment2.pt",
+    "output_log":"output_file/test1.jsonl",
+    "test": true
+}
