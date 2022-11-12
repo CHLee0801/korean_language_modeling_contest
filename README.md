@@ -48,7 +48,7 @@ Category는 [품질, 일반, 편의성, 디자인, 인지도, 가격, 다양성]
 
 이러한 방식으로 모델을 생성했습니다. 모든 Aspect에 대해서 Label Imbalance가 존재했고, Dev set에 Overfitting 되는 문제를 방지하기 위해 Cross-Validation을 해서 5개의 모델을 구현했습니다. 그런 다음 5개의 모델 결과를 앙상블하고 자체적 voting 기법을 활용해 최종 Submission File을 생성하였습니다. 다음은 모델 구현 및 실행 방법입니다.
 
-본 프로젝트를 위해서 Label Imbalance를 완화하기 위해 국립국어원('https://corpus.korean.go.kr/main.do')에서 제공하는 'NIKL_SA_2020_v1.0'를 사용하였습니다.
+본 프로젝트를 위해서 Label Imbalance를 완화하기 위해 국립국어원(https://corpus.korean.go.kr/main.do)에서 제공하는 'NIKL_SA_2020_v1.0'를 사용하였습니다.
 해당 데이터는 Sentiment에서 중립과, 부정의 데이터를 얻기 위해 사용되었습니다.
 
 ## 1. 콘다 환경 설정 및 필요한 라이브러리 설치
