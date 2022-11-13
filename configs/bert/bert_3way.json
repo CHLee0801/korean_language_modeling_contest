@@ -7,7 +7,7 @@
     "eval_path":"data/final_version/0_category_3way_dev.csv",
     "train_batch_size" : 1,
     "eval_batch_size": 1,
-    "gradient_accumulation_steps": 32,
+    "gradient_accumulation_steps": 1,
     "learning_rate" : 2e-5,
     "ngpu" : 1,
     "num_workers" : 0,
@@ -23,5 +23,5 @@
     "checkpoint_path" : "ckpt/bert/category_3way_2e-5/",
     "mode":"trinary",
     "model":"bert",
-    "fold_option": true
+    "fold_option": false
 }

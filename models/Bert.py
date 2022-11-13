@@ -79,6 +79,19 @@ class BERT(pl.LightningModule):
 
 
     def forward(self, input_ids, input_mask, labels=None):
+        sep_idx = []
+        print(input_ids)
+        for i in range(len(input_ids)):
+            if input_ids[i] == 3:
+                sep_idx.append(i)
+        token_type_ids = torch.zeros_like(input_ids)
+        print(input_ids)
+        print(sep_idx)
+        for i in range(len(token_type_ids)):
+            if i > sep_idx[0] and i <= sep_idx[1]:
+                token_type_ids[i] = 1
+        print(token_type_ids)
+        exit()
         output = self.model(
             input_ids=input_ids,
             attention_mask=input_mask

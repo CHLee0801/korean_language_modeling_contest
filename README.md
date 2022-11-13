@@ -58,8 +58,8 @@ Category는 [품질, 일반, 편의성, 디자인, 인지도, 가격, 다양성]
 ## 1. 콘다 환경 설정 및 필요한 라이브러리 설치
 
 ```
-conda create -n momal python=3.9 && conda activate momal
-pip install -r requirements.txt
+conda create -n momal python=3.9
+conda activate momal
 ```
 
 CUDA 버전과 개발 환경에 맞게 Pytorch를 설치해주세요.
@@ -70,6 +70,11 @@ CUDA 버전과 개발 환경에 맞게 Pytorch를 설치해주세요.
 pip3 install torch torchvision torchaudio
 #For CUDA 11.x
 pip3 install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
+```
+
+마지막으로 추가 함수를 설치합니다.
+```
+pip install -r requirements.txt
 ```
 
 ## 2. 데이터 제작 및 모델 Checkpoints 다운로드
