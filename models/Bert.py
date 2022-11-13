@@ -79,22 +79,21 @@ class BERT(pl.LightningModule):
 
 
     def forward(self, input_ids, input_mask, labels=None):
+        # Generate segment embedding 
         sep_idx = []
-        print(input_ids)
-        for i in range(len(input_ids)):
-            if input_ids[i] == 3:
+        for i in range(len(input_ids[0])):
+            if input_ids[0][i] == 3:
                 sep_idx.append(i)
         token_type_ids = torch.zeros_like(input_ids)
-        print(input_ids)
-        print(sep_idx)
-        for i in range(len(token_type_ids)):
+        for i in range(len(token_type_ids[0])):
             if i > sep_idx[0] and i <= sep_idx[1]:
-                token_type_ids[i] = 1
-        print(token_type_ids)
-        exit()
+                token_type_ids[0][i] = 1
+
+        # Forward
         output = self.model(
             input_ids=input_ids,
-            attention_mask=input_mask
+            attention_mask=input_mask,
+            token_type_ids=token_type_ids
         )
         output = self.dropout(output.pooler_output)
         output = self.labels_classifier(output)

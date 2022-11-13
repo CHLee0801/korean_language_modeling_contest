@@ -6,7 +6,7 @@
     "train_path" : "data/final_version/3_sentiment_train.csv",
     "eval_path":"data/final_version/3_sentiment_dev.csv",
     "train_batch_size" : 32,
-    "eval_batch_size": 1,
+    "eval_batch_size": 32,
     "gradient_accumulation_steps": 1,
     "learning_rate" : 2e-5,
     "ngpu" : 1,

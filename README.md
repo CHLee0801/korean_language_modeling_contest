@@ -54,7 +54,7 @@ Category는 [품질, 일반, 편의성, 디자인, 인지도, 가격, 다양성]
 
 다음은 모델 구현 및 실행 방법입니다.
 
-본 프로젝트를 위해서 Label Imbalance를 완화하기 위해 국립국어원(https://corpus.korean.go.kr/main.do)에서 제공하는 'NIKL_SA_2020_v1.0'를 사용하였습니다.
+본 프로젝트를 위해서 Label Imbalance를 완화하기 위해 국립국어원 https://corpus.korean.go.kr/main.doadd 에서 제공하는 'NIKL_SA_2020_v1.0'를 사용하였습니다.
 해당 데이터는 Sentiment에서 중립과, 부정의 데이터를 얻기 위해 사용되었습니다.
 
 ## 1. 콘다 환경 설정 및 필요한 라이브러리 설치
@@ -74,7 +74,7 @@ pip3 install torch torchvision torchaudio
 pip3 install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
-마지막으로 추가 함수를 설치합니다.
+마지막으로 추가 라이브러리를 설치합니다.
 ```
 pip install -r requirements.txt
 ```
