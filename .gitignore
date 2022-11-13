@@ -3,3 +3,5 @@ ckpt
 ckpt_full
 ckpt.zip
 wandb
+second_stage
+run.sh
