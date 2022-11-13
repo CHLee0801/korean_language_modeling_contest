@@ -12,7 +12,7 @@
     "num_workers" : 0,
     "check_val_every_n_epoch":1,
     "accelerator" : "deepspeed_stage_2",
-    "CUDA_VISIBLE_DEVICES" : "9",
+    "CUDA_VISIBLE_DEVICES" : "0",
     "check_validation" : true,
     "checkpoint_path_1" : "ckpt/category_3way/fold1_trinary.pt",
     "checkpoint_path_2" : "ckpt/category_5way/fold1_category.pt",
