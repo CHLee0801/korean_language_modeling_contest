@@ -96,13 +96,13 @@ unzip ckpt.zip
 ### Step 1-1 -> 카테고리 3-way 분류 모델 실행 코드 (품질, 일반, 나머지)
 
 ```
-python run.py --config configs/bert/bert_category_3way.json
+python run.py --config configs/bert/bert_3way.json
 ```
 
 ### Step 1-2 -> 카테고리 5-way 분류 모델 실행 코드 (편의성, 디자인, 인지도, 가격, 다양성)
 
 ```
-python run.py --config configs/bert/bert_category_5way.json
+python run.py --config configs/bert/bert_category.json
 ```
 
 ### Step 2 -> 토픽 4-way 분류 모델 실행 코드 (제품 전체, 본품, 패키지/구성품, 브랜드)
