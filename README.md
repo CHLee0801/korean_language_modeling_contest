@@ -143,6 +143,7 @@ output_file 폴더 아래 5개 모델에 대한 output file이 생성됩니다.
 ### Step 5 -> 5개의 모델 결과를 활용해 최종 Submission File 생성
 
 output_file폴더에 생성된 output file에 대한 hard-voting을 하여 최종 submission file을 생성합니다. (output_file폴더 내에 있는 모든 파일에 대한 voting을 하게 되므로 주의)
+
 vote.ipynb의 모든 셀을 수행시키면 최종 "final_submission.jsonl"이 나오게 됩니다.
 
 해당 파일을 최종 결과물로 사용합니다.
