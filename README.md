@@ -41,7 +41,7 @@ Category는 [품질, 일반, 편의성, 디자인, 인지도, 가격, 다양성]
 
 데이터 분석 결과 Category에서 Label Imbalance가 있었지만 ["품질", "일반", 나머지]로 묶었을 때 Label Imbalance가 완화됨을 확인했습니다.
 
-따라서,
+따라서, 다음과 같은 방법으로 모델을 생성했습니다. 
 
 ```
 1. 전체 데이터에 대해 Category를 3-way["품질", "일반", 나머지]로 분류
@@ -50,7 +50,7 @@ Category는 [품질, 일반, 편의성, 디자인, 인지도, 가격, 다양성]
 4. Aspect(Topic + Category)를 주고 Sentiment를 3-way["긍정", "부정", "중립"]로 분
 ```
 
-이러한 방식으로 모델을 생성했습니다. 모든 Aspect에 대해서 Label Imbalance가 존재했고, Dev set에 Overfitting 되는 문제를 방지하기 위해 Cross-Validation을 해서 5개의 모델을 구현했습니다. 그런 다음 5개의 모델 결과를 앙상블하고 자체적 voting 기법을 활용해 최종 Submission File을 생성하였습니다. 이를 통해 좀 더 Robust한 Submission을 구성할 수 있었습니다.
+모든 Aspect에 대해서 Label Imbalance가 존재했고, Dev set에 Overfitting 되는 문제를 방지하기 위해 Cross-Validation을 해서 5개의 모델을 구현했습니다. 그런 다음 5개의 모델 결과를 앙상블하고 자체적 voting 기법을 활용해 최종 Submission File을 생성하였습니다. 이를 통해 좀 더 Robust한 Submission을 구성할 수 있었습니다.
 
 다음은 모델 구현 및 실행 방법입니다.
 
