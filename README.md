@@ -54,7 +54,7 @@ Category는 [품질, 일반, 편의성, 디자인, 인지도, 가격, 다양성]
 
 다음은 모델 구현 및 실행 방법입니다.
 
-본 프로젝트를 위해서 Label Imbalance를 완화하기 위해 국립국어원('https://corpus.korean.go.kr/main.do')에서 제공하는 'NIKL_SA_2020_v1.0'를 사용하였습니다.
+본 프로젝트를 위해서 Label Imbalance를 완화하기 위해 국립국어원(https://corpus.korean.go.kr/main.do)에서 제공하는 'NIKL_SA_2020_v1.0'를 사용하였습니다.
 해당 데이터는 Sentiment에서 중립과, 부정의 데이터를 얻기 위해 사용되었습니다.
 
 ## 1. 콘다 환경 설정 및 필요한 라이브러리 설치
@@ -98,13 +98,13 @@ unzip ckpt.zip
 ### Step 1-1 -> 카테고리 3-way 분류 모델 실행 코드 (품질, 일반, 나머지)
 
 ```
-python run.py --config configs/bert/bert_category_3way.json
+python run.py --config configs/bert/bert_3way.json
 ```
 
 ### Step 1-2 -> 카테고리 5-way 분류 모델 실행 코드 (편의성, 디자인, 인지도, 가격, 다양성)
 
 ```
-python run.py --config configs/bert/bert_category_5way.json
+python run.py --config configs/bert/bert_category.json
 ```
 
 ### Step 2 -> 토픽 4-way 분류 모델 실행 코드 (제품 전체, 본품, 패키지/구성품, 브랜드)
@@ -121,7 +121,7 @@ python run.py --config configs/bert/bert_sentiment.json
 
 ### Step 4 -> 각 모델에서 최고 Checkpoints 경로를 기입하여 5개의 Output_file 생성
 
-config 폴더에 있는 'write*{0,1,2,3,4}.json' 파일에서 'checkpoint_path*{1,2,3,4}'를 수정해주어야 합니다.
+config 폴더에 있는 'write_{0,1,2,3,4}.json' 파일에서 'checkpoint_path_{1,2,3,4}'를 수정해주어야 합니다.
 
 > checkpoint_path_1 : Step 1-1의 모델 Checkpoints  
 > checkpoint_path_2 : Step 1-2의 모델 Checkpoints  
