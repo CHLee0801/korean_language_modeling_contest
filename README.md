@@ -6,7 +6,7 @@
 
 본 대회는 상품이나 서비스에 대한 리뷰가 주어졌을 때 Aspect와 그에 상응하는 Sentiment를 구분하는 ABSA Task를 수행하는 대회입니다.
 
-Aspect로는
+Aspect는 총 25개로 구성되어 있습니다.
 
 ```
 '제품 전체#품질', '제품 전체#편의성', '제품 전체#일반', '제품 전체#다양성', '제품 전체#인지도', '제품 전체#가격', '제품 전체#디자인',
@@ -15,13 +15,13 @@ Aspect로는
 '브랜드#품질', '브랜드#일반', '브랜드#인지도', '브랜드#가격', '브랜드#디자인'
 ```
 
-가 있고, Sentiment는 '긍정', '부정', '중립' 이렇게 3가지 입니다.
+Sentiment는 '긍정', '부정', '중립' 3가지로 구성되어 있습니다.
 
 ### Baseline Model
 
-Baseline Model은 'https://github.com/kiyoungkim1/LMkor' 링크에서 제공하는 KoBert를 사용하였습니다.
+Baseline Model은 'https://github.com/kiyoungkim1/LMkor' 링크에서 제공하는 KoBERT를 사용하였습니다.
 
-해당 모델이 사용한 학습데이터는 다음과 같고, '모두의 말뭉치'를 학습하였기 때문에 Baseline model로 선정하였습니다.
+해당 모델이 사용한 학습데이터는 다음과 같고, '모두의 말뭉치'를 학습하였기 때문에 Baseline Model로 사용하였습니다.
 
 ```
 - 국내 주요 커머스 리뷰 1억개 + 블로그 형 웹사이트 2000만개 (75GB)
@@ -31,26 +31,28 @@ Baseline Model은 'https://github.com/kiyoungkim1/LMkor' 링크에서 제공하�
 
 ### 문제 해결 방법
 
-데이터를 분석하였을 때 Aspect를 '#'을 기준으로 나누어 먼저 Aspect 중에서 두 종목을 나누어 구하고 Sentiment를 구하는 방식이 가장 효율적이라고 판단하였습니다.
+데이터를 분석하였을 때 Aspect를 '#'을 기준으로 나누어 먼저 Aspect 중에서 두 종목을 나누어 구하고 Sentiment를 구하는 방법이 가장 효율적이라고 판단하였습니다.
 
-Aspect는 'Topic#Category' 로 구성되어 있다고 구분지었고,
+Aspect는 'Topic#Category' 로 구성되어 있다고 명시하겠습니다.
 
 Topic은 [제품 전체, 본품, 패키지/구성품, 브랜드] 이렇게 4-way로 나뉘고,
 
 Category는 [품질, 일반, 편의성, 디자인, 인지도, 가격, 다양성] 이렇게 7-way로 나뉩니다.
 
-데이터 분석 결과 Category에서 Label Imbalance가 있었지만 [품질, 일반, 나머지]로 묶었을 때 균등한 Label Distribution이 있었습니다.
+데이터 분석 결과 Category에서 Label Imbalance가 있었지만 ["품질", "일반", 나머지]로 묶었을 때 Label Imbalance가 완화됨을 확인했습니다.
 
 따라서,
 
 ```
-1. 전체 데이터에 대해 Category를 3-way[품질, 일반, 나머지]로 분류,
-2. 나머지로 분류된 데이터들의 Category를 5-way[편의성, 디자인, 인지도, 가격, 다양성]로 분류,
-3. Category를 Prompt로 주고 Topic을 4-way[제품 전체, 본품, 패키지/구성품, 브랜드]로 분류,
-4. Aspect(Topic + Category)를 주고 Sentiment를 3-way[긍정, 부정, 중립]로 분류
+1. 전체 데이터에 대해 Category를 3-way["품질", "일반", 나머지]로 분류
+2. 나머지로 분류된 데이터들의 Category를 5-way["편의성", "디자인", "인지도", "가격", "다양성"]로 분류
+3. Category를 Prompt로 주고 Topic을 4-way["제품 전체", "본품", "패키지/구성품", "브랜드"]로 분류
+4. Aspect(Topic + Category)를 주고 Sentiment를 3-way["긍정", "부정", "중립"]로 분
 ```
 
-이러한 방식으로 모델을 생성했습니다. 모든 Aspect에 대해서 Label Imbalance가 존재했고, Dev set에 Overfitting 되는 문제를 방지하기 위해 Cross-Validation을 해서 5개의 모델을 구현했습니다. 그런 다음 5개의 모델 결과를 앙상블하고 자체적 voting 기법을 활용해 최종 Submission File을 생성하였습니다. 다음은 모델 구현 및 실행 방법입니다.
+이러한 방식으로 모델을 생성했습니다. 모든 Aspect에 대해서 Label Imbalance가 존재했고, Dev set에 Overfitting 되는 문제를 방지하기 위해 Cross-Validation을 해서 5개의 모델을 구현했습니다. 그런 다음 5개의 모델 결과를 앙상블하고 자체적 voting 기법을 활용해 최종 Submission File을 생성하였습니다. 이를 통해 좀 더 Robust한 Submission을 구성할 수 있었습니다.
+
+다음은 모델 구현 및 실행 방법입니다.
 
 본 프로젝트를 위해서 Label Imbalance를 완화하기 위해 국립국어원('https://corpus.korean.go.kr/main.do')에서 제공하는 'NIKL_SA_2020_v1.0'를 사용하였습니다.
 해당 데이터는 Sentiment에서 중립과, 부정의 데이터를 얻기 위해 사용되었습니다.
@@ -144,6 +146,4 @@ output_file 폴더 아래 5개 모델에 대한 output file이 생성됩니다.
 
 output_file폴더에 생성된 output file에 대한 hard-voting을 하여 최종 submission file을 생성합니다. (output_file폴더 내에 있는 모든 파일에 대한 voting을 하게 되므로 주의)
 
-vote.ipynb의 모든 셀을 수행시키면 최종 "final_submission.jsonl"이 나오게 됩니다.
-
-해당 파일을 최종 결과물로 사용합니다.
+vote.ipynb를 실행시키면 최종 "final_submission.jsonl"이 나오게 되고, 해당 파일을 최종 결과물로 사용합니다.
