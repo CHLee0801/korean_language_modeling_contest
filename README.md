@@ -119,7 +119,7 @@ python run.py --config configs/bert/bert_sentiment.json
 
 ### Step 4 -> 각 모델에서 최고 Checkpoints 경로를 기입하여 5개의 Output_file 생성
 
-config 폴더에 있는 'write*{0,1,2,3,4}.json' 파일에서 'checkpoint_path*{1,2,3,4}'를 수정해주어야 합니다.
+config 폴더에 있는 'write_{0,1,2,3,4}.json' 파일에서 'checkpoint_path_{1,2,3,4}'를 수정해주어야 합니다.
 
 > checkpoint_path_1 : Step 1-1의 모델 Checkpoints  
 > checkpoint_path_2 : Step 1-2의 모델 Checkpoints  
