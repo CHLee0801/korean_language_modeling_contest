@@ -96,7 +96,7 @@ gdown https://drive.google.com/uc?id=1tGnXzMLEVfhJGDEtn9rszIV0eNZOdce1
 unzip ckpt.zip
 ```
 
-## 3. 실험 실행 코드 (다운받은 Checkpoint를 활용해 바로 데이터를 만들고자 한다면 Step 4로 가세요)
+## 3. 실험 실행 코드 (다운받은 Checkpoint를 활용해 바로 결과를 만들고자 한다면 Step 4로 가세요)
 
 각 실험의 최고 성능을 알기 위해서는 wandb 회원 가입 후 로그인을 하여야합니다.
 
